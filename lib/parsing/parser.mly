@@ -2719,6 +2719,10 @@ statefml:
   | h=heapkappa CONJUNCTION p=pure_formula { (p, h) }
   | p=pure_formula { (p, EmptyHeap) }
 
+typespec:
+  | 
+  | 
+
 heapkappa:
 | EMP { EmptyHeap }
 | str=LIDENT MINUSGREATER args = pure_formula_term
@@ -2737,6 +2741,7 @@ only_disj_effect_spec:
 
 disj_effect_spec:
 | d=separated_nonempty_list(DISJUNCTION, effect_spec) { d }
+| ts = typespec {ts}
 
 option_conti_sharp :
 | HASH conti= disj_effect_spec {Some conti }

@@ -31,6 +31,24 @@ and term =
     | TList of term list
     | TTupple of term list
 
+
+    
+and types = 
+    | BOTTOM 
+    | INT 
+    | SINGLE of int
+    | STRING 
+    | BOOL of term
+    | NPRI of string
+    | TOP
+    | Unit
+    | List_int
+    | Bool
+    | TyString
+    | Lamb
+    | Arrow of types * types
+    | TVar of string (* this is last, so > concrete types *)
+
 (* (Label n) _k (*@ spec @*) -> e *)
 and core_handler_ops = (string * string option * disj_spec option * core_lang) list
 
@@ -73,7 +91,16 @@ and pi =
   | Imply  of pi * pi
   | Not    of pi 
   | Predicate of string * term list 
-  | Subsumption of term * term
+  | Subsumption of term * term 
+
+and ty_pi = 
+  | TYTrue
+  | TYFalse 
+  | Ato of term * types 
+  | Inter of ty_pi * ty_pi 
+  | Uinon of ty_pi * ty_pi 
+  | Neg of ty_pi
+
 
 and kappa = 
   | EmptyHeap
@@ -105,6 +132,7 @@ and stagedSpec =
       | RaisingEff of (pi * kappa * instant * term)
       (* | IndPred of { name : string; args: term list } *)
       | TryCatch of (pi * kappa * trycatch * term)
+      | TypeSpec of ty_pi
 
 and spec = stagedSpec list
 
