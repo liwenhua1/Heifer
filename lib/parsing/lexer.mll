@@ -75,6 +75,7 @@ let keyword_table =
     "module", MODULE;
     "mutable", MUTABLE;
     "new", NEW;
+    "not", NOT;
     "nonrec", NONREC;
     "object", OBJECT;
     "of", OF;

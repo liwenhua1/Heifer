@@ -94,13 +94,18 @@ and pi =
   | Subsumption of term * term 
 
 and ty_pi = 
-  | TYTrue
-  | TYFalse 
-  | Ato of term * types 
+  | Ty of types
   | Inter of ty_pi * ty_pi 
-  | Uinon of ty_pi * ty_pi 
+  | Union of ty_pi * ty_pi 
   | Neg of ty_pi
 
+and ty_formula_single = 
+  | Ato of term * ty_pi 
+  
+and ty_formula = 
+  | TYTrue
+  | TYFalse 
+  | TSpect of ty_formula_single * ty_formula_single
 
 and kappa = 
   | EmptyHeap

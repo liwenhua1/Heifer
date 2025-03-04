@@ -2617,6 +2617,20 @@ pure_formula_term:
     { TLambda (Pretty.verifier_getAfreeVar "plambda", params, ef, Option.map (Core_lang.transformation []) b) }
 ;
 
+type_term:
+  | n = INT {Ty (SINGLE (int_of_string n))}
+  | a = type_term CONJUNCTION b=type_term { Inter (a,b)}
+  | a = type_term DISJUNCTION b=type_term { Union (a,b)}
+  | NOT LPAREN b=type_term RPAREN { Neg (b)}
+  
+
+type_formula_single:
+  | a = STRING COLON n = type_term { Ato (Var a, n) }
+
+typespec:
+  | type_formula_single SEMI type_formula_single
+  
+
 pure_formula: 
   | PROP_TRUE { True }
   | PROP_FALSE { False }
@@ -2719,9 +2733,6 @@ statefml:
   | h=heapkappa CONJUNCTION p=pure_formula { (p, h) }
   | p=pure_formula { (p, EmptyHeap) }
 
-typespec:
-  | 
-  | 
 
 heapkappa:
 | EMP { EmptyHeap }
