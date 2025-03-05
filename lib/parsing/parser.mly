@@ -2636,7 +2636,7 @@ type_formula:
 ;
 
 typespec:
-  | REQT a = type_formula ENST b = type_formula {TypeSpec (a, b)}
+  | REQT a = type_formula ENST b = type_formula {[TypeSpec (a, b)]}
 ;
   
 
@@ -2755,13 +2755,14 @@ only_effect_spec:
 
 effect_spec:
 | s=separated_nonempty_list(SEMI, stagedSpec1) { s }
+| ts = typespec {ts}
 
 only_disj_effect_spec:
 | d=disj_effect_spec EOF { (d:disj_spec) }
 
 disj_effect_spec:
 | d=separated_nonempty_list(DISJUNCTION, effect_spec) { d }
-| ts = typespec {ts}
+
 
 option_conti_sharp :
 | HASH conti= disj_effect_spec {Some conti }

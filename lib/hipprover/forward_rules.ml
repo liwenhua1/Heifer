@@ -64,8 +64,9 @@ let constrain_final_res (sp:disj_spec) (v:term) : disj_spec =
         HigherOrder (And (p, Atomic (EQ, r, v)), k, (c, va), r)
       | RaisingEff (p, k, (c, va), r) ->
         RaisingEff (And (p, Atomic (EQ, r, v)), k, (c, va), r)
+      | TypeSpec _ -> failwith "unimplemented"
       | TryCatch _ -> failwith "unimplemented"))
-
+      
 (** Environment used for forward verification *)
 type fvenv = {
   (* defined methods, may be added to if lambdas are given names *)
@@ -371,6 +372,7 @@ let retriveLastRes (a:spec) : term option =
   | Require _ :: _ ->
     None
   | Exists _ :: _ -> failwith ("retriveLastRes ending with ex")
+  | TypeSpec _ ::_ -> failwith "unimplemented"
 
 
 
@@ -805,6 +807,7 @@ let recursivelyInstantiateFunctionCalls (current_function:string) env instantiat
     | x :: xs  -> 
       (match x with 
       | Shift _
+      | TypeSpec _ -> failwith "unimplemented"
       | Reset _
       | Require _ | Exists _  | NormalReturn _ | RaisingEff _ | TryCatch _ -> helper (acc@[x]) xs 
       | HigherOrder (pi, kappa, (fname, actualArgs), _ret)  -> 
@@ -939,6 +942,7 @@ let rec infer_of_expression (env:fvenv) (history:disj_spec) (expr:core_lang): di
             | _, Exists _
             | _, Require _
             | _, NormalReturn _ -> "res"
+              | (_, TypeSpec (_, _)) -> failwith "unimplemented"
           in
 
           (*
