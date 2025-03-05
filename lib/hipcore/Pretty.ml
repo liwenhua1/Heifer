@@ -151,6 +151,37 @@ let rec string_of_term t : string =
 
   | TStr str -> "\"" ^ str ^ "\""
 
+and string_of_types t = 
+  match t with 
+  | BOTTOM -> "bot"
+  | INT -> "int"
+  | SINGLE i -> string_of_int i
+  | STRING -> "string"
+  | BOOL b -> string_of_term b 
+  | TOP -> "top"
+  | Unit -> "()"
+  | List_int -> "int List"
+  | Bool -> "bool"
+  | Arrow ( type1 , type2) -> string_of_types type1 ^ " -> " ^ string_of_types type2
+  | TVar s -> s 
+
+and string_of_ty_pi t = 
+  match t with
+  | Ty ty -> string_of_types ty
+  | Inter ( ty_pi1 , ty_pi2) ->  string_of_ty_pi ty_pi1 ^ "/\\" ^ string_of_ty_pi ty_pi2
+  | Union ( ty_pi1 , ty_pi2) ->  string_of_ty_pi ty_pi1 ^ "\/" ^ string_of_ty_pi ty_pi2
+  | Neg  ty_pi -> "not(" ^ string_of_ty_pi ty_pi ^ ")"
+
+
+  
+
+and string_of_ty_formula t = 
+  match t with
+  | TYTrue -> "true"
+  | TYFalse -> "false"
+  | Ato ( term , ty_pi ) -> string_of_term term ^ ":" ^ string_of_ty_pi ty_pi 
+  | TSpectConj  ( ty_formula_single1 , ty_formula_single2) -> string_of_ty_formula ty_formula_single1 ^ " ; " ^ string_of_ty_formula ty_formula_single2
+
 and string_of_staged_spec (st:stagedSpec) : string =
   match st with
   | Shift (nz, k, body, r) ->
@@ -184,6 +215,7 @@ and string_of_staged_spec (st:stagedSpec) : string =
       (match param with | None -> " " | Some p -> "("^ p ^ ") ")^ ": " ^ string_of_disj_spec eSpec   in 
     let string_of_eff_cases ops =  List.fold_left (fun acc a -> acc ^ ";\n" ^string_of_eff_case a) "" ops in 
     Format.asprintf "ens %s; \n(TRY \n(%s)\nCATCH \n{%s%s}[%s])\n" (string_of_state (pi, h)) (string_of_spec src) (string_of_normal_case) (string_of_eff_cases ops) (string_of_term ret)
+  | TypeSpec a -> Format.asprintf "%s" (string_of_ty_formula a) 
 
 
 and string_of_spec (spec:spec) :string =

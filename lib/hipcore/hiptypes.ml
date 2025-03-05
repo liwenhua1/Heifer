@@ -39,13 +39,10 @@ and types =
     | SINGLE of int
     | STRING 
     | BOOL of term
-    | NPRI of string
     | TOP
     | Unit
     | List_int
     | Bool
-    | TyString
-    | Lamb
     | Arrow of types * types
     | TVar of string (* this is last, so > concrete types *)
 
@@ -99,13 +96,16 @@ and ty_pi =
   | Union of ty_pi * ty_pi 
   | Neg of ty_pi
 
-and ty_formula_single = 
-  | Ato of term * ty_pi 
+
+
+
+ 
   
 and ty_formula = 
   | TYTrue
   | TYFalse 
-  | TSpect of ty_formula_single * ty_formula_single
+  | Ato of term * ty_pi 
+  | TSpectConj of ty_formula * ty_formula
 
 and kappa = 
   | EmptyHeap
@@ -137,11 +137,13 @@ and stagedSpec =
       | RaisingEff of (pi * kappa * instant * term)
       (* | IndPred of { name : string; args: term list } *)
       | TryCatch of (pi * kappa * trycatch * term)
-      | TypeSpec of ty_pi
+      | TypeSpec of ty_formula
 
 and spec = stagedSpec list
 
 and disj_spec = spec list
+
+
 
 [@@deriving
   visitors { variety = "map"; name = "map_spec" },
@@ -160,6 +162,8 @@ type typ =
 [@@deriving show { with_path = false }, ord]
 
 [@@@warning "+17"]
+
+
 
 let min_typ a b = if compare_typ a b <= 0 then a else b
 
