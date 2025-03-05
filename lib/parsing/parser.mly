@@ -2622,13 +2622,16 @@ type_term:
   | a = type_term CONJUNCTION b=type_term { Inter (a,b)}
   | a = type_term DISJUNCTION b=type_term { Union (a,b)}
   | NOT LPAREN b=type_term RPAREN { Neg (b)}
+;
   
 
 type_formula_single:
   | a = STRING COLON n = type_term { Ato (Var a, n) }
+;
 
 typespec:
   | type_formula_single SEMI type_formula_single
+;
   
 
 pure_formula: 

@@ -169,7 +169,7 @@ and string_of_ty_pi t =
   match t with
   | Ty ty -> string_of_types ty
   | Inter ( ty_pi1 , ty_pi2) ->  string_of_ty_pi ty_pi1 ^ "/\\" ^ string_of_ty_pi ty_pi2
-  | Union ( ty_pi1 , ty_pi2) ->  string_of_ty_pi ty_pi1 ^ "\/" ^ string_of_ty_pi ty_pi2
+  | Union ( ty_pi1 , ty_pi2) ->  string_of_ty_pi ty_pi1 ^ "\\/" ^ string_of_ty_pi ty_pi2
   | Neg  ty_pi -> "not(" ^ string_of_ty_pi ty_pi ^ ")"
 
 
