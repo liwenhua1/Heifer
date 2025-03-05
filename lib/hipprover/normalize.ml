@@ -482,6 +482,7 @@ let pure_abduction left right =
   *)
   abduced, left1, right1
 
+let (empty_normalStage:normalStage) = ([], (True , EmptyHeap ) , (True , EmptyHeap ))
 let normalize_step (acc : normalisedStagedSpec) (stagedSpec : stagedSpec)
     : normalisedStagedSpec =
 
@@ -489,6 +490,7 @@ let normalize_step (acc : normalisedStagedSpec) (stagedSpec : stagedSpec)
   let res =
     let effectStages, (existential, req, ens) = acc in
     match stagedSpec with
+    | TypeSpec _ -> ([],empty_normalStage)
     | Exists li -> (effectStages, (existential @ li, req, ens))
     | Require (p3, h3) ->
       let p2, h2 = ens in
