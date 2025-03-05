@@ -645,6 +645,7 @@ let getherPureFromSpec_step (acc:pi) (stagedSpec : stagedSpec) : pi =
   match stagedSpec with 
   | Shift _ -> failwith "todo"
   | Reset _ -> failwith "todo"
+  | TypeSpec _ -> failwith "todo"
   | Exists _ -> acc 
   | Require (pi, _) 
   | NormalReturn (pi, _) 
@@ -905,7 +906,7 @@ let remove_noncontributing_existentials :
     merge_classes h1 p1
   and collect_related_vars_stage st =
     match st with
-    | Shift _ | Reset _ -> failwith "todo"
+    | Shift _ | Reset _ | TypeSpec _  -> failwith "todo"
     | Require (p, h) | NormalReturn (p, h) -> collect_related_vars_state (p, h)
     | Exists _ -> []
     | HigherOrder (p, h, _constr, _ret) | RaisingEff (p, h, _constr, _ret) ->
@@ -1019,7 +1020,7 @@ let simplify_existential_locations sp =
         match s with
         | Shift _ -> []
         | Reset _ -> []
-        | Exists _ | TryCatch _ -> []
+        | Exists _ | TryCatch _ | TypeSpec _ -> []
         | Require (p, _)
         | NormalReturn (p, _)
         | HigherOrder (p, _, _, _)

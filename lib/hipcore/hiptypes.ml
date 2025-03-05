@@ -137,7 +137,7 @@ and stagedSpec =
       | RaisingEff of (pi * kappa * instant * term)
       (* | IndPred of { name : string; args: term list } *)
       | TryCatch of (pi * kappa * trycatch * term)
-      | TypeSpec of ty_formula
+      | TypeSpec of ty_formula * ty_formula
 
 and spec = stagedSpec list
 
@@ -259,13 +259,13 @@ type effectStage = {
 [@@deriving
   visitors { variety = "map"; name = "map_effect_stage_" },
   visitors { variety = "reduce"; name = "reduce_effect_stage_" }]
-
+(* 
 type typef = {
     t_evars : string list;
     t_pre : ty_formula;
     t_post : ty_formula;
     t_ret : term;
-  }
+  } *)
 
 type shiftStage = {
   s_evars : string list;
@@ -308,7 +308,7 @@ type effHOTryCatchStages =
   | ShiftStage of shiftStage
   | TryCatchStage of tryCatchStage
   | ResetStage of resetStage
-  | TypeSpc of typef
+  (* | TypeSpc of typef *)
 [@@deriving
   visitors { variety = "map"; name = "map_eff_stages_" },
   visitors { variety = "reduce"; name = "reduce_eff_stages_" }]
