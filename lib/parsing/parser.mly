@@ -631,7 +631,10 @@ let mk_directive ~loc name arg =
 %token SUBSUMES
 %token REQUIRES  EFFCATCH
 %token ENSURES
+%token REQT
+%token ENST
 %token EMP
+%token NOT
 %token GREATER
 %token GREATERRBRACE
 %token GREATERRBRACKET
@@ -2625,12 +2628,15 @@ type_term:
 ;
   
 
-type_formula_single:
+type_formula:
   | a = STRING COLON n = type_term { Ato (Var a, n) }
+  | FALSE {TYFalse}
+  | TRUE {TYTrue}
+  | a = type_formula SEMI b = type_formula {TSpectConj (a,b)}
 ;
 
 typespec:
-  | type_formula_single SEMI type_formula_single
+  | REQT a = type_formula ENST b = type_formula {TypeSpec (a, b)}
 ;
   
 
