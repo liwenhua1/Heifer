@@ -27,7 +27,7 @@ let rec retype_term (term : Hiptypes.term) =
                Option.map retype_core_lang body)
   | Hiptypes.Construct (name, args) -> Construct (name, List.map retype_term args)
   | Hiptypes.TTuple ts -> TTuple (List.map retype_term ts)
-  | Hiptypes.Type t -> Typ t
+  (* | Hiptypes.Type t -> Typ t *)
   in
   { term_desc; term_type = Types.new_type_var () }
 and retype_pi (pi : Hiptypes.pi) =

@@ -151,4 +151,5 @@ and disj_spec = spec list *)
 [@@deriving
   visitors { variety = "map"; name = "map_spec" },
   visitors { variety = "reduce"; name = "reduce_spec" },
-  visitors { variety = "mapreduce"; name = "mapreduce_spec" } ]
+  visitors { variety = "mapreduce"; name = "mapreduce_spec" },
+  ord ]

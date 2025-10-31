@@ -1,5 +1,6 @@
 open Hipcore
 
+
 [@@@warning "-17"]
 (* can also appear in pi *)
 type bin_rel_op = Hiptypes.bin_rel_op =  GT | LT | EQ | GTEQ | LTEQ
@@ -154,3 +155,4 @@ and typ = Types.typ =
   visitors { variety = "reduce"; name = "reduce_spec" },
   visitors { variety = "mapreduce"; name = "mapreduce_spec" },
   ord]
+
