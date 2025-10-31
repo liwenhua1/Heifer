@@ -78,9 +78,30 @@ let string_of_constant c : string =
   | TTrue -> "true"
   | TFalse -> "false"
 
+let rec string_of_base_type t = 
+  match t with 
+    | Top -> "\top"
+    | Bot -> "\bot"
+    | Any -> "Any"
+    | Unit -> "()"
+    | Int -> "int"
+    | Bool -> "bool"
+    | TyString -> "Str"
+    | Consta c -> string_of_constant c
+    | Ref bty -> "ref(" ^ string_of_base_type bty ^ ")"
+
+let rec string_of_ty t : string = 
+  match t with 
+  | Base bty -> string_of_base_type bty
+  | Union (t1, t2) -> string_of_ty t1 ^ "\/" ^ string_of_ty t2
+  | Inter (t1, t2) -> string_of_ty t1 ^ "\/" ^ string_of_ty t2
+  | Neg t -> "not(" ^ string_of_ty t ^ ")"
+  | Arrow (t1, t2) -> string_of_ty t1 ^ "->" ^ string_of_ty t2
+
 let rec string_of_term t : string =
   match t with
   | Const c -> string_of_constant c
+  | Type ty ->  string_of_ty ty 
   | BinOp (op, lhs, rhs) -> Format.asprintf "(%s %s %s)" (string_of_term lhs) (string_of_bin_term_op op) (string_of_term rhs)
   | TNot a -> Format.asprintf "not(%s)" (string_of_term a)
   | Var str -> str
@@ -186,6 +207,7 @@ and string_of_pi pi : string =
   | Not    p -> "not(" ^ string_of_pi p ^ ")"
   | Predicate (str, t) -> str ^ "(" ^ (string_of_args string_of_term t) ^ ")"
   | Subsumption (a, b) -> Format.asprintf "%s <: %s" (string_of_term a) (string_of_term b)
+  | Colon  (st , t) -> st ^ string_of_term t
 
 
 and  string_of_effect_cases_specs (h_ops:(string * string option * staged_spec) list): string =
@@ -550,6 +572,9 @@ let pp_bin_term_op ppf op =
 let pp_constant ppf c =
   Format.fprintf ppf "%s" (string_of_constant c)
 
+let pp_type ppf t = 
+  Format.fprintf ppf "%s" (string_of_ty t)
+
 let rec pp_term ppf t =
   let open Format in
   match t with
@@ -568,7 +593,8 @@ let rec pp_term ppf t =
       (pp_print_list ~pp_sep:(fun ppf () -> fprintf ppf ";@ ") pp_term) args *)
   | TTuple args ->
       fprintf ppf "(@[<hov 1>%a@])"
-      (pp_print_list ~pp_sep:(fun ppf () -> fprintf ppf ",@ ") pp_term) args
+      (pp_print_list ~pp_sep:(fun ppf () -> fprintf ppf ",@ ") pp_term) args 
+  | Type t -> fprintf ppf "%a" pp_type t
 and pp_call_like : 'a. (Format.formatter -> 'a -> unit) -> Format.formatter -> string * 'a list -> unit
   = fun pp_arg ppf (f, args) ->
   let open Format in
@@ -598,6 +624,7 @@ and pp_pi ppf p =
       pp_term t1 pp_term t2
   | Atomic (rel, t1, t2) -> fprintf ppf "@[<hov 1>(%a@ %a@ %a)@]"
     pp_term t1 pp_bin_op rel pp_term t2
+  |  Colon  (st , t) -> fprintf ppf "%a : %a" pp_print_string st  pp_print_string (string_of_term t)
 and pp_kappa ppf k =
   let open Format in
   match k with

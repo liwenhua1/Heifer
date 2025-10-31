@@ -10,7 +10,7 @@ let binder_of_ident ?(typ=Types.new_type_var ()) (ident : string) : binder = (id
 
 let rec retype_term (term : Hiptypes.term) =
   let term_desc = match term with
-  | Hiptypes.Const (ValUnit) -> Const ValUnit
+  | Hiptypes.Const (ValUnit) -> (Const ValUnit: term_desc)
   | Hiptypes.Const (Num n) -> Const (Num n)
   | Hiptypes.Var v -> Var v
   | Hiptypes.Const (TStr s) -> Const (TStr s)
@@ -27,6 +27,7 @@ let rec retype_term (term : Hiptypes.term) =
                Option.map retype_core_lang body)
   | Hiptypes.Construct (name, args) -> Construct (name, List.map retype_term args)
   | Hiptypes.TTuple ts -> TTuple (List.map retype_term ts)
+  | Hiptypes.Type t -> Typ t
   in
   { term_desc; term_type = Types.new_type_var () }
 and retype_pi (pi : Hiptypes.pi) =

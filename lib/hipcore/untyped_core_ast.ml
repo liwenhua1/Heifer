@@ -147,7 +147,7 @@ and staged_spec =
 
 (* and spec = stagedSpec list
 and disj_spec = spec list *)
-
+(* let compare_ty _ _ = true  *)
 [@@deriving
   visitors { variety = "map"; name = "map_spec" },
   visitors { variety = "reduce"; name = "reduce_spec" },

@@ -27,6 +27,7 @@ and term_desc =
   | TLambda of string * binder list * staged_spec option * core_lang option
   (* unused *)
   | TTuple of term list
+  | Typ of Untyped_core_ast.ty
 and term =
   {
     term_desc: term_desc;
@@ -146,6 +147,7 @@ and typ = Types.typ =
   | Arrow of typ * typ
   | TConstr of string * typ list
   | TVar of string
+
 
 [@@deriving
   visitors { variety = "map"; name = "map_spec" },
