@@ -14,7 +14,7 @@ and const =
   | TTrue
   | TFalse
 
-and ty =
+and bty =
   (* The order of constructors is important:
     - base types
     - type constructors
@@ -29,9 +29,16 @@ and ty =
   | Int
   | Bool
   | TyString
-  | Lamb
   | Consta of const
+  | Ref of bty
   (* TODO do we need a Poly variant for generics? *)
+
+and ty = 
+  | Base of bty
+  | Union of ty * ty 
+  | Inter of ty * ty 
+  | Neg of ty 
+  | Arrow of ty * ty
 
 
 and term =
@@ -48,6 +55,7 @@ and term =
   (* The string seems to be redundant here and I think we should remove it if possible *)
   | TLambda of string * string list * staged_spec option * core_lang option
   | TTuple of term list
+  | Type of ty
 (* (Label n) _k (*@ spec @*) -> e *)
 and core_handler_ops = (string * string option * staged_spec option * core_lang) list
 (* x :: xs -> e is represented as ("::", [x, xs], e) *)
@@ -98,6 +106,7 @@ and pi =
   | Not    of pi
   | Predicate of string * term list
   | Subsumption of term * term
+  | Colon of string * term
 
 and kappa =
   | EmptyHeap
