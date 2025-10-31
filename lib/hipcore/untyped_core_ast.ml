@@ -5,6 +5,7 @@ type binder = string
 
 type bin_rel_op = GT | LT | EQ | GTEQ | LTEQ
 and bin_term_op = Plus | Minus | SConcat | TAnd | TPower | TTimes | TDiv | TOr | TCons
+
 and const =
   | ValUnit
   | Num of int
@@ -12,6 +13,27 @@ and const =
   | Nil
   | TTrue
   | TFalse
+
+and ty =
+  (* The order of constructors is important:
+    - base types
+    - type constructors
+    - type variables
+    This is because type unification reduces a type to its "simplest form" given constraints,
+    and constructors earlier in the list are treated as "simpler". *)
+  (* dynamic type that can unify with anything else. this is an escape hatch for extensions that cannot be typed under the standard ocaml type system *)
+  | Top
+  | Bot
+  | Any
+  | Unit
+  | Int
+  | Bool
+  | TyString
+  | Lamb
+  | Consta of const
+  (* TODO do we need a Poly variant for generics? *)
+
+
 and term =
   | Const of const
   | Var of string
