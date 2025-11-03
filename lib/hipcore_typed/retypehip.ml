@@ -27,7 +27,7 @@ let rec retype_term (term : Hiptypes.term) =
                Option.map retype_core_lang body)
   | Hiptypes.Construct (name, args) -> Construct (name, List.map retype_term args)
   | Hiptypes.TTuple ts -> TTuple (List.map retype_term ts)
-  (* | Hiptypes.Type t -> Typ t *)
+  | Hiptypes.Type t -> Type t
   in
   { term_desc; term_type = Types.new_type_var () }
 and retype_pi (pi : Hiptypes.pi) =
@@ -41,6 +41,7 @@ and retype_pi (pi : Hiptypes.pi) =
   | Hiptypes.Not p -> Not (retype_pi p)
   | Hiptypes.Predicate (name, args) -> Predicate (name, List.map retype_term args) 
   | Hiptypes.Subsumption (lhs, rhs) -> Subsumption (retype_term lhs, retype_term rhs)
+  | Hiptypes.Colon (lhs,rhs) -> Colon (lhs,retype_term rhs)
 and retype_kappa (kappa : Hiptypes.kappa) =
   match kappa with
   | Hiptypes.EmptyHeap -> EmptyHeap

@@ -34,6 +34,7 @@ let rec untype_term (t : term) : Hiptypes.term =
       TLambda (id, List.map ident_of_binder params, Option.map untype_staged_spec spec,
                Option.map untype_core_lang body)
   | TTuple ts -> TTuple (List.map untype_term ts)
+  | Type t -> Type t
 and untype_pi (p : pi) : Hiptypes.pi =
   match p with
   | True -> Hiptypes.True
@@ -45,6 +46,7 @@ and untype_pi (p : pi) : Hiptypes.pi =
   | Not p' -> Hiptypes.Not (untype_pi p')
   | Predicate (name, args) -> Hiptypes.Predicate (name, List.map untype_term args)
   | Subsumption (t1, t2) -> Hiptypes.Subsumption (untype_term t1, untype_term t2)
+  | Colon (lhs,rhs) -> Hiptypes.Colon (lhs, untype_term rhs)
 and untype_kappa (k : kappa) : Hiptypes.kappa =
   match k with
   | EmptyHeap -> Hiptypes.EmptyHeap

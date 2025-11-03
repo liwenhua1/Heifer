@@ -28,7 +28,7 @@ and term_desc =
   | TLambda of string * binder list * staged_spec option * core_lang option
   (* unused *)
   | TTuple of term list
-  | Typ of Untyped_core_ast.ty
+  | Type of Untyped_core_ast.ty
 and term =
   {
     term_desc: term_desc;
@@ -97,6 +97,8 @@ and pi =
   | Not    of pi
   | Predicate of string * term list
   | Subsumption of term * term
+  | Colon of string * term
+
 
 and kappa =
   | EmptyHeap

@@ -60,6 +60,7 @@ and string_of_pi pi : string =
   | Not    p -> "not(" ^ string_of_pi p ^ ")"
   | Predicate (str, t) -> str ^ "(" ^ (string_of_args string_of_term t) ^ ")"
   | Subsumption (a, b) -> Format.asprintf "%s <: %s" (string_of_term a) (string_of_term b)
+  | Colon (a,b) ->  a ^ (string_of_term b)
 
 and string_of_try_catch_lemma (x:tryCatchLemma) : string = 
   let (tcl_head, tcl_handledCont, (*(h_normal, h_ops),*) tcl_summary) = x in 
