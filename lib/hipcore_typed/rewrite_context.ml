@@ -20,6 +20,9 @@ class ['self] map_spec_with_binders = object
 
   method! visit_Exists (bind_ctx, env) x f =
     super#visit_Exists (add_binder (ident_of_binder x) bind_ctx, env) x f
+(* 
+  method visit_ty (bind_ctx, env) x = failwith "d"
+    super#visit_ty (add_binder (ident_of_binder x) bind_ctx, env) x f *)
 
   method! visit_ForAll (bind_ctx, env) x f =
     super#visit_ForAll (add_binder (ident_of_binder x) bind_ctx, env) x f

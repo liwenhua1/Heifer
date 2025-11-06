@@ -548,6 +548,8 @@ let simplify_type_visitor = object
   method! visit_typ env t =
     TEnv.simplify env.equalities t
 
+  
+
 end
 
 (** Given an environment, and a typed term, perform simplifications

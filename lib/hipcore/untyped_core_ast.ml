@@ -24,21 +24,21 @@ and bty =
   (* dynamic type that can unify with anything else. this is an escape hatch for extensions that cannot be typed under the standard ocaml type system *)
   | Top
   | Bot
-  | Any
-  | Unit
-  | Int
-  | Bool
-  | TyString
+  | AnyBty
+  | UnitBty
+  | IntBty
+  | BoolBty
+  | TyStringBty
   | Consta of const
-  | Ref of bty
+  | RefBty of bty
   (* TODO do we need a Poly variant for generics? *)
 
 and ty = 
-  | Base of bty
+  | BaseTy of bty
   | Union of ty * ty 
   | Inter of ty * ty 
   | Neg of ty 
-  | Arrow of ty * ty
+  | ArrowTy of ty * ty
 
 
 and term =

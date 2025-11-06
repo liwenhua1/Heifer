@@ -82,21 +82,21 @@ let rec string_of_base_type t =
   match t with 
     | Top -> "\top"
     | Bot -> "\bot"
-    | Any -> "Any"
-    | Unit -> "()"
-    | Int -> "int"
-    | Bool -> "bool"
-    | TyString -> "Str"
+    | AnyBty -> "Any"
+    | UnitBty -> "()"
+    | IntBty -> "int"
+    | BoolBty -> "bool"
+    | TyStringBty -> "Str"
     | Consta c -> string_of_constant c
-    | Ref bty -> "ref(" ^ string_of_base_type bty ^ ")"
+    | RefBty bty -> "ref(" ^ string_of_base_type bty ^ ")"
 
 let rec string_of_ty t : string = 
   match t with 
-  | Base bty -> string_of_base_type bty
+  | BaseTy bty -> string_of_base_type bty
   | Union (t1, t2) -> string_of_ty t1 ^ "\/" ^ string_of_ty t2
   | Inter (t1, t2) -> string_of_ty t1 ^ "\/" ^ string_of_ty t2
   | Neg t -> "not(" ^ string_of_ty t ^ ")"
-  | Arrow (t1, t2) -> string_of_ty t1 ^ "->" ^ string_of_ty t2
+  | ArrowTy (t1, t2) -> string_of_ty t1 ^ "->" ^ string_of_ty t2
 
 let rec string_of_term t : string =
   match t with

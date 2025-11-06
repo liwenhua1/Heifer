@@ -13,6 +13,34 @@ and const = Hiptypes.const =
   | Nil
   | TTrue
   | TFalse
+  (* TODO do we need a Poly variant for generics? *)
+
+and bty = Untyped_core_ast.bty =
+  (* The order of constructors is important:
+    - base types
+    - type constructors
+    - type variables
+    This is because type unification reduces a type to its "simplest form" given constraints,
+    and constructors earlier in the list are treated as "simpler". *)
+  (* dynamic type that can unify with anything else. this is an escape hatch for extensions that cannot be typed under the standard ocaml type system *)
+  | Top
+  | Bot
+  | AnyBty
+  | UnitBty
+  | IntBty
+  | BoolBty
+  | TyStringBty
+  | Consta of const
+  | RefBty of bty
+  (* TODO do we need a Poly variant for generics? *)
+
+and ty = Untyped_core_ast.ty =
+  | BaseTy of bty
+  | Union of ty * ty 
+  | Inter of ty * ty 
+  | Neg of ty 
+  | ArrowTy of ty * ty
+
 and term_desc =
   | Const of const
   | Var of string
@@ -28,7 +56,7 @@ and term_desc =
   | TLambda of string * binder list * staged_spec option * core_lang option
   (* unused *)
   | TTuple of term list
-  | Type of Untyped_core_ast.ty
+  | Type of ty
 and term =
   {
     term_desc: term_desc;
