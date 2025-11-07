@@ -352,6 +352,7 @@ module LowLevel = struct
           Theories.(get_symbol int "infix +" env.theories)
           [a1; b1],
         Int )
+    | Type _ -> failwith "to be implemented"
     | BinOp (Minus, a, b) ->
       let a1, _ = term_to_why3 env a in
       let b1, _ = term_to_why3 env b in
@@ -510,6 +511,7 @@ module LowLevel = struct
     | Not a -> Term.t_not (pi_to_why3 env a)
     | Predicate (_, _) -> failwith "nyi Predicate"
     | Subsumption (_, _) -> pi_to_why3 env True
+    | Colon _ -> failwith "to be implemented"
 
   let rec expr_to_why3 env e =
     (* Format.printf "expr %s@." (Pretty.string_of_core_lang e); *)
@@ -831,9 +833,11 @@ let rec term_to_whyml t =
     term (Tident (qualid [name]))
   | Construct (name, args) ->
       tapp (qualid [name]) (List.map term_to_whyml args)
-  | TTuple _ | BinOp (TPower, _, _) | BinOp (TDiv, _, _) | Const (TStr _)
+  | TTuple _ | BinOp (TPower, _, _) | BinOp (TDiv, _, _) | Const (TStr _) 
     ->
     failwith "nyi"
+  |Type _ -> failwith "to be implemented"
+  
 
 and vars_to_params vars =
   List.map
@@ -918,6 +922,7 @@ and pi_to_whyml p =
   | Not a -> term (Tnot (pi_to_whyml a))
   | Imply (_, _) | Predicate (_, _) -> failwith "nyi"
   | Subsumption (_, _) -> term Ttrue
+  | Colon _ -> failwith "to be implemented"
 
 let collect_variables =
   object

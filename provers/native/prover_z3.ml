@@ -130,6 +130,8 @@ let rec term_to_expr z3_ctx t : Z3.Expr.expr =
   (*
   | Gen i          -> Z3.Arithmetic.Real.mk_const_s ctx ("t" ^ string_of_int i ^ "'")
   *)
+  | Type _ -> failwith "to be implemented"
+
   | BinOp (SConcat, t1, t2) ->
     let t1' = term_to_expr z3_ctx t1 in 
     let t2' = term_to_expr z3_ctx t2 in 
@@ -259,6 +261,7 @@ let rec pi_to_expr z3_ctx pi: Expr.expr =
   (*| Imply (pi1, pi2)    -> Z3.Boolean.mk_implies ctx (pi_to_expr ctx pi1) (pi_to_expr ctx pi2)
   *)
   | Not pi -> Z3.Boolean.mk_not ctx (pi_to_expr z3_ctx pi)
+  | Colon _ -> failwith "to be implemented"
 
 (* let z3_query (_s : string) =
    (* Format.printf "z3: %s@." _s; *)
