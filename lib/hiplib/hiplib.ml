@@ -361,9 +361,10 @@ let run_ocaml_string s =
   (** Parse and typecheck the code, before converting it into a core language program.
      This mirrors the flow of compilation used in ocamlc. *)
   try
-    let prelude_items = Parse.implementation (Lexing.from_string ocaml_prelude) in
-    let items = Parse.implementation (Lexing.from_string s) in
-    let unit_info = Unit_info.(make ~source_file:"" Impl "") in
+    let _prelude_items = Parse.implementation (Lexing.from_string ocaml_prelude) in
+    let _items = Parse.implementation (Lexing.from_string s) in
+    let _ = print_endline "here" in ()
+    (* let unit_info = Unit_info.(make ~source_file:"" Impl "") in
     Compile_common.with_info ~native:false ~tool_name:"heifer" ~dump_ext:"" unit_info @@ begin fun info ->
       (* suppress warnings, the workaround used to enable shift/reset in the typed frontend
          causes a lot of spurious warning 20/21s *)
@@ -371,7 +372,7 @@ let run_ocaml_string s =
       let typed_implementation = Compile_common.typecheck_impl info (prelude_items @ items) in
       let@ _ = Globals.Timing.(time overall_all) in
       process_ocaml_structure typed_implementation.structure
-    end
+    end *)
   with
     | exn -> Format.printf "%a\n" Location.report_exception exn
 
