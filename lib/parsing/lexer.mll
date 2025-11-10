@@ -43,6 +43,22 @@ let decimal_literal = ['0'-'9'] ['0'-'9' '_']*
 let int_literal = decimal_literal
 
 rule token = parse
+  | "top"
+        {TOP}
+  | "bot"
+        {BOT}
+  | "Any"
+        {ANY}
+  | "unit"
+        {UNIT}
+  | "int"
+        {INTB}
+  | "bool"
+        {BOOLBTY}
+  | "str"
+        {STRBTY}
+  | "ref"
+        {REF}
   | blank +
       { token lexbuf }
   | newline
@@ -65,6 +81,10 @@ rule token = parse
       { STAR }
   | "->"
       { MINUSGREATER }
+  | "~>"
+      { ARR }
+  | ":"
+      { COLON }
   | "."
       { DOT }
   | "~"
@@ -91,6 +111,8 @@ rule token = parse
       { FALSE }
   | "emp"
       { EMP }
+  | "not"
+      {NOT}
   | int_literal as n
       { INT (int_of_string n) }
   | "ex" | "exists"
@@ -120,6 +142,8 @@ rule token = parse
       { CAPITAL_IDENT v}
   | lowercase_ident as v
       { LOWERCASE_IDENT v }
+  | "#"
+      {TYAN}
   | _ as c
       { raise_error lexbuf (Printf.sprintf "Unexpected character: '%c'" c) }
 

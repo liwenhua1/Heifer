@@ -6,9 +6,9 @@ let rec map f xs =
 
 let id y = y
 
-let map_id ys
-(*@ ens res=ys @*)
-= map id ys
+let map_id ys =
+(*@ req ys -> # top;   ens res=ys @*)
+map id ys
 
 let [@pure] succ (x:int) : int = x + 1
 

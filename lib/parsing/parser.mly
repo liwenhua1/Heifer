@@ -21,6 +21,8 @@ open Hiptypes
 %token RBRACKET
 %token SEMI
 %token COMMA
+%token COLON
+%token NOT
 
 %token TRUE
 %token FALSE
@@ -30,6 +32,7 @@ open Hiptypes
 %token <string> STRING
 %token <string> LOWERCASE_IDENT
 %token <string> CAPITAL_IDENT
+
 
 %token EXISTS
 %token FORALL
@@ -41,7 +44,16 @@ open Hiptypes
 %token SHIFT
 %token RESET
 %token LONGARROW
-
+%token TOP
+%token BOT
+%token ANY
+%token UNIT
+%token INTB
+%token BOOLBTY
+%token STRBTY
+%token REF
+%token TYAN
+%token ARR
 %token EOF
 
 ///////////////////////////
@@ -113,6 +125,39 @@ const:
       { TStr s }
 ;
 
+bty: 
+  | TOP
+    {Top}
+  | BOT
+    {Bot}
+  | ANY
+    {AnyBty}
+  | UNIT
+    {UnitBty}
+  | INTB
+    {IntBty}
+  | BOOLBTY
+    {BoolBty}
+  | STRBTY
+    {TyStringBty}
+  | c = const
+    {Consta c}
+  | REF LPAREN v = bty RPAREN
+    {RefBty v}
+
+ty:
+  | v = bty
+      {BaseTy v}
+  | LPAREN t1 = ty DISJUNCTION t2 = ty RPAREN
+      {Union (t1, t2)}
+  | LPAREN t1 = ty CONJUNCTION t2 = ty RPAREN
+      {Inter (t1, t2)} 
+  | NOT LPAREN t=ty RPAREN
+      {Neg t}
+  | t1 = ty ARR t2 = ty
+      {ArrowTy (t1, t2)}
+;
+
 term:
   | c = const
       { Const c }
@@ -124,6 +169,8 @@ term:
       { Rel (op, t1, t2) }
   | t1 = term op = bin_term_op t2 = term
       { BinOp (op, t1, t2) }
+  | TYAN t = ty
+      {Type t}  
   | v = LOWERCASE_IDENT LPAREN args = separated_list(COMMA, term) RPAREN
       { TApp (v, args) }
   | v = CAPITAL_IDENT
@@ -157,6 +204,8 @@ pi:
 //   | v = LOWERCASE_IDENT args=delimited(LPAREN, separated_nonempty_list(COMMA, pure_formula_term), RPAREN) { Predicate (v, args) }
   | p = delimited(LPAREN, pi, RPAREN)
       { p }
+  | v = LOWERCASE_IDENT COLON t = term
+      { Colon (v, t)}
 ;
 
 kappa:

@@ -282,7 +282,8 @@ and infer_types_term ?(hint : typ option) term : term using_env =
       return (term.term_desc, term_type)
   | TNot a, _ ->
     let* a = infer_types_term ~hint:Bool a in
-    return (TNot a, Bool)
+    return (TNot a, (Bool:typ))
+  | Type t, _ -> return (Type t, Bool)
   | BinOp (op, a, b), _ ->
       let atype, btype, ret_type = match op with
         | TCons ->

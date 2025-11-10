@@ -186,6 +186,7 @@ let choose_spec (inferred_spec : staged_spec) (given_spec : staged_spec option) 
   Option.fold ~none:inferred_spec ~some:(fun spec -> spec) given_spec
 
 let analyze_method (prog : core_program) (meth : meth_def) : core_program =
+ 
   let suppress_error_if_not_debug ~on_error ~default f =
     if Debug.in_debug_mode ()
     then f ()
@@ -198,12 +199,19 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
   let@ _ = suppress_error_if_not_debug
     ~on_error:(fun e -> report_error ~kind:"Function" ~name:meth.m_name ~error:(Printexc.to_string e))
     ~default:prog in
+     
   let given_spec = meth.m_spec in
+    let () = match given_spec  with
+  | None -> print_endline "end"
+  | Some s -> print_endline (string_of_staged_spec s) 
+  in 
+  
   let inferred_spec, result =
     infer_and_check_method prog meth given_spec
   in
   (* after infference, if the method does not have a spec, then add
      the inferred spec into the method? *)
+
   let choosen_spec = choose_spec inferred_spec given_spec in
   let updated_meth = {meth with m_spec = Some choosen_spec} in
   (* we always add the method into the program, regardless of whether it is verified or not? *)
@@ -332,6 +340,8 @@ let process_intermediates (it : Typedhip.intermediate) prog : binder list * core
       (* [], { prog with cp_sl_predicates = SMap.add p.p_sl_name p prog.cp_sl_predicates } *)
       todo ()
   | Meth (m_name, m_params, m_spec, m_body, m_tactics, pure_fn_info) ->
+      
+      
       let meth : meth_def = {m_name; m_params; m_spec; m_body; m_tactics} in
       process_pure_fn_info meth pure_fn_info;
       let@ _ = Debug.span (fun _ ->
@@ -342,15 +352,19 @@ let process_intermediates (it : Typedhip.intermediate) prog : binder list * core
       [m_name, function_type], prog
 
 let process_ocaml_structure (items: Ocaml_common.Typedtree.structure) : unit =
+  
   let untyped_items = Untypeast.untype_structure items in
   let process_ocaml_item (bound_names, prog) (item_untyped, item) =
     let@ _ = Debug.(span (fun _ -> 
       debug ~at:3 ~title:"processing next ocaml structure item" "%s" (Pprintast.string_of_structure [item_untyped])
     )) in
     let intermediate = Ocamlfrontend.Core_lang_typed.transform_str bound_names item in
+    
     match intermediate with
-    | Some it ->
+    | Some (it:intermediate) ->
+      
         let new_bound, prog = process_intermediates it prog in
+        
         new_bound @ bound_names, prog
     | None ->
         bound_names, prog
@@ -361,10 +375,10 @@ let run_ocaml_string s =
   (** Parse and typecheck the code, before converting it into a core language program.
      This mirrors the flow of compilation used in ocamlc. *)
   try
-    let _prelude_items = Parse.implementation (Lexing.from_string ocaml_prelude) in
-    let _items = Parse.implementation (Lexing.from_string s) in
-    let _ = print_endline "here" in ()
-    (* let unit_info = Unit_info.(make ~source_file:"" Impl "") in
+    let prelude_items = Parse.implementation (Lexing.from_string ocaml_prelude) in
+    let items : Parsetree.structure = Parse.implementation (Lexing.from_string s) in
+  
+    let unit_info = Unit_info.(make ~source_file:"" Impl "") in
     Compile_common.with_info ~native:false ~tool_name:"heifer" ~dump_ext:"" unit_info @@ begin fun info ->
       (* suppress warnings, the workaround used to enable shift/reset in the typed frontend
          causes a lot of spurious warning 20/21s *)
@@ -372,7 +386,7 @@ let run_ocaml_string s =
       let typed_implementation = Compile_common.typecheck_impl info (prelude_items @ items) in
       let@ _ = Globals.Timing.(time overall_all) in
       process_ocaml_structure typed_implementation.structure
-    end *)
+    end
   with
     | exn -> Format.printf "%a\n" Location.report_exception exn
 

@@ -207,7 +207,7 @@ and string_of_pi pi : string =
   | Not    p -> "not(" ^ string_of_pi p ^ ")"
   | Predicate (str, t) -> str ^ "(" ^ (string_of_args string_of_term t) ^ ")"
   | Subsumption (a, b) -> Format.asprintf "%s <: %s" (string_of_term a) (string_of_term b)
-  | Colon  (st , t) -> st ^ string_of_term t
+  | Colon  (st , t) -> st ^":"^string_of_term t
 
 
 and  string_of_effect_cases_specs (h_ops:(string * string option * staged_spec) list): string =
