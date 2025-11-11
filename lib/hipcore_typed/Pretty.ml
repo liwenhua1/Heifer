@@ -27,6 +27,8 @@ let rec string_of_base_type t =
     | TyStringBty -> "Str"
     | Consta c -> string_of_constant c
     | RefBty bty -> "ref(" ^ string_of_base_type bty ^ ")"
+    | Tyvar t -> t
+    | Defty (a,b) -> a ^  string_of_list (fun x -> string_of_base_type x) b
 
 
 let rec string_of_ty t : string = 

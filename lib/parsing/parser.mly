@@ -24,6 +24,7 @@ open Hiptypes
 %token COLON
 %token NOT
 
+
 %token TRUE
 %token FALSE
 %token EMP
@@ -32,7 +33,7 @@ open Hiptypes
 %token <string> STRING
 %token <string> LOWERCASE_IDENT
 %token <string> CAPITAL_IDENT
-
+%token <string> TYVAR
 
 %token EXISTS
 %token FORALL
@@ -125,6 +126,19 @@ const:
       { TStr s }
 ;
 
+ty_var:
+  | v = TYVAR 
+    {Tyvar v}
+;
+opt_ty_var_list
+   : {[]}
+   | ty_var_list {$1}
+;
+ty_var_list:
+    
+    | bty {[$1]}
+    | ty_var_list COMMA bty {$1 @ [$3]}
+
 bty: 
   | TOP
     {Top}
@@ -143,8 +157,14 @@ bty:
   | c = const
     {Consta c}
   | REF LPAREN v = bty RPAREN
-    {RefBty v}
-
+    {RefBty v} 
+  | v = ty_var
+    {v}
+  | v = CAPITAL_IDENT 
+    {Defty (v,[])}
+  | v = CAPITAL_IDENT LBRACKET l = opt_ty_var_list  RBRACKET
+    {Defty (v,l)}
+;
 ty:
   | v = bty
       {BaseTy v}

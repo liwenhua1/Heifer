@@ -13,7 +13,8 @@ and const =
   | Nil
   | TTrue
   | TFalse
-
+and ty_var = string
+and name = string
 and bty =
   (* The order of constructors is important:
     - base types
@@ -31,6 +32,8 @@ and bty =
   | TyStringBty
   | Consta of const
   | RefBty of bty
+  | Tyvar of ty_var
+  | Defty of name * bty list
   (* TODO do we need a Poly variant for generics? *)
 
 and ty = 

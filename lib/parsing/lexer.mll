@@ -31,6 +31,7 @@ let store_normalized_newline nl =
   else store_substring nl ~pos:1 ~len:(len - 1)
 }
 
+
 let newline = '\r'* '\n'
 let blank = [' ' '\t']
 let lowercase = ['a'-'z' '_']
@@ -41,6 +42,8 @@ let lowercase_ident = lowercase identchar*
 let uppercase_ident = uppercase identchar*
 let decimal_literal = ['0'-'9'] ['0'-'9' '_']*
 let int_literal = decimal_literal
+let tyvar_anno = "'"
+let ty_var = lowercase_ident tyvar_anno 
 
 rule token = parse
   | "top"
@@ -59,6 +62,8 @@ rule token = parse
         {STRBTY}
   | "ref"
         {REF}
+  | ty_var as v 
+        {TYVAR v}
   | blank +
       { token lexbuf }
   | newline

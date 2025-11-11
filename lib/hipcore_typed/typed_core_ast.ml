@@ -15,6 +15,10 @@ and const = Hiptypes.const =
   | TFalse
   (* TODO do we need a Poly variant for generics? *)
 
+and ty_var = string
+
+and name =string
+
 and bty = Untyped_core_ast.bty =
   (* The order of constructors is important:
     - base types
@@ -32,6 +36,9 @@ and bty = Untyped_core_ast.bty =
   | TyStringBty
   | Consta of const
   | RefBty of bty
+  | Tyvar of ty_var
+  | Defty of name * bty list
+
   (* TODO do we need a Poly variant for generics? *)
 
 and ty = Untyped_core_ast.ty =
