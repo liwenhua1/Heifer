@@ -429,10 +429,19 @@ let constant_to_singleton_type (v:Typed_core_ast.term) (s:(pi*kappa)) =
     |Const c -> Type (BaseTy (Consta c))
     |Var v -> let r = find_in_state v s in 
                if (fst r) = "h" then (Var v)
-               else (Var v)
+               else (snd r).term_desc
     | _ -> failwith "must be a constant" in 
     {term_desc=desc;
     term_type=v.term_type}
+
+let constant_to_singleton_type_re (v:Typed_core_ast.term) (s:(pi*kappa)) = 
+  match v.term_desc with 
+    |Const c -> NormalReturn (res_eq (constant_to_singleton_type ({term_desc =Type (BaseTy (Consta c)); term_type=v.term_type}) s), EmptyHeap)
+    |Var c -> let r = find_in_state c s in 
+               if (fst r) = "h" then NormalReturn (res_eq (constant_to_singleton_type ({term_desc =(Var c); term_type= v.term_type}) s), snd s) 
+               else NormalReturn (Colon ("res", (snd r)), EmptyHeap) 
+    | _ -> failwith "must be a constant" 
+
                   
 let rec find_all_binders (s:staged_spec) = 
   match s with 
@@ -445,13 +454,13 @@ let remove_req (s:staged_spec) =
   | Require (a,b) -> (a,b)
   | _ -> failwith "Type state only have req and forall"
 
-let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec * bool) = 
+let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) = 
     let _binders, init_state = find_all_binders spec in
     (* list_printer print_endline (List.fold_right (fun a r -> (fst a)::r) binders []); *)
-  let rec forward state (body:core_lang_desc) : (staged_spec* bool) = 
+  let rec forward state (body:core_lang_desc) : (staged_spec) = 
     let () = print_endline (string_of_staged_spec (Require (fst state, snd state))) in
     match body with
-  | CValue v -> NormalReturn (res_eq (constant_to_singleton_type v state), EmptyHeap), true
+  | CValue v ->constant_to_singleton_type_re v state
   | CLet _ -> failwith "to be implemented CLet"
   | CSequence _ -> failwith "to be implemented CSequence"
   | CFunCall _ -> failwith "to be implemented CFunCall"
@@ -465,6 +474,6 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec * bool)
   | _ -> failwith "not supported expressions"
   in 
   let rs = forward (remove_req init_state) meth.m_body.core_desc in 
-  print_endline (string_of_staged_spec (fst rs)); rs
+  print_endline (string_of_staged_spec (rs)); rs
 
 
