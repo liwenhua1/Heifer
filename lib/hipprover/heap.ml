@@ -64,12 +64,28 @@ let rec find_var_in_heap (v:string) (h:kappa) =
   | SepConj (a, b) ->
       (find_var_in_heap v a) @ (find_var_in_heap v b)
 
+let rec swap_var_name_in_heap (ori:string) (replace:string) (h:kappa) = 
+  match h with
+  | EmptyHeap -> EmptyHeap
+  | PointsTo (x, t) ->
+      if x=ori then PointsTo (replace, t) else  PointsTo (x, t)
+  | SepConj (a, b) ->
+      SepConj (swap_var_name_in_heap ori replace a, swap_var_name_in_heap ori replace b)
+
 let rec find_var_in_pure (v:string) (h:pi) = 
   match h with
   | Colon (x,t) -> if x = v then [t] else []
   | And (a, b) ->
        (find_var_in_pure v a) @ (find_var_in_pure v b)
   | _ -> []
+
+let rec swap_var_name_in_pure (ori:string) (replace:string) (s:pi) = 
+  match s with
+  | Colon (x,t) -> if x = ori then Colon (replace,t) else Colon (x,t)
+  | And (a, b) ->
+       And (swap_var_name_in_pure ori replace a, swap_var_name_in_pure ori replace b)
+  | _ -> s
+
 
 let find_in_state (v:string) (s:(pi*kappa)) = 
   let r1 = find_var_in_heap v (snd s) in 
@@ -82,7 +98,11 @@ let find_in_state (v:string) (s:(pi*kappa)) =
     | _ -> failwith "spec error" 
   )
 
-(*
+let swap_var_name_in_state (ori:string) (replace:string) (s:pi*kappa) = 
+  let new_pi = swap_var_name_in_pure ori replace (fst s) in 
+  let new_kappa = swap_var_name_in_heap ori replace (snd s) in 
+  (new_pi,new_kappa)
+  (*
 let rec check :
   string ->
   string list ->

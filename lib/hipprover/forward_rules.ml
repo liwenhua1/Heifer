@@ -436,11 +436,15 @@ let constant_to_singleton_type (v:Typed_core_ast.term) (s:(pi*kappa)) =
 
 let constant_to_singleton_type_re (v:Typed_core_ast.term) (s:(pi*kappa)) = 
   match v.term_desc with 
-    |Const c -> NormalReturn (res_eq (constant_to_singleton_type ({term_desc =Type (BaseTy (Consta c)); term_type=v.term_type}) s), EmptyHeap)
+    |Const c -> NormalReturn (res_eq (constant_to_singleton_type ({term_desc =Type (BaseTy (Consta c)); term_type=v.term_type}) s), snd s)
     |Var c -> let r = find_in_state c s in 
                if (fst r) = "h" then NormalReturn (res_eq (constant_to_singleton_type ({term_desc =(Var c); term_type= v.term_type}) s), snd s) 
-               else NormalReturn (Colon ("res", (snd r)), EmptyHeap) 
+               else NormalReturn (Colon ("res", (snd r)), snd s) 
     | _ -> failwith "must be a constant" 
+
+let extract_return (s:staged_spec) = match s with 
+         | NormalReturn (a,b) -> (a,b) 
+         | _ -> failwith "should be some return forms"
 
                   
 let rec find_all_binders (s:staged_spec) = 
@@ -461,7 +465,12 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
     let () = print_endline (string_of_staged_spec (Require (fst state, snd state))) in
     match body with
   | CValue v ->constant_to_singleton_type_re v state
-  | CLet _ -> failwith "to be implemented CLet"
+  | CLet (x, expr1, expr2) -> 
+    let res = forward state expr1.core_desc in
+    let current_state = extract_return res in 
+    let new_state = swap_var_name_in_state "res" (fst x) current_state in 
+    forward new_state expr2.core_desc
+
   | CSequence _ -> failwith "to be implemented CSequence"
   | CFunCall _ -> failwith "to be implemented CFunCall"
   | CWrite _ -> failwith "to be implemented CWrite"
