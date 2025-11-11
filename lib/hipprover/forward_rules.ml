@@ -412,3 +412,24 @@ let rec forward (env: fvenv) (expr : core_lang): staged_spec * fvenv =
   | CReset expr_body ->
       let spec_body, env = forward env expr_body in
       Reset spec_body, env
+
+let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  staged_spec = 
+    let init_state = match spec with 
+    | Sequence (pre,_) -> pre 
+    | _ -> failwith "type verification must have single req and ens" in 
+  let rec forward state (body:core_lang_desc) : staged_spec = 
+    match body with
+  | CValue _ -> failwith "to be implemented CValue"
+  | CLet _ -> failwith "to be implemented CLet"
+  | CSequence _ -> failwith "to be implemented CSequence"
+  | CFunCall _ -> failwith "to be implemented CFunCall"
+  | CWrite _ -> failwith "to be implemented CWrite"
+  | CRef _ -> failwith "to be implemented CRef"
+  | CRead  _ -> failwith "to be implemented CRead"
+  (* effect start *)
+  (* match e with | eff case... | constr case... *)
+  | CMatch _ -> failwith "to be implemented cmath"
+  | CLambda _ -> failwith "to be implemented CLambda"
+  | _ -> failwith "not supported expressions"
+  in 
+  forward init_state meth.m_body.core_desc 

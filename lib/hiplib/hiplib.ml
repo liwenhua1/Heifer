@@ -95,13 +95,13 @@ let expected_false result name =
 let report_header ~kind ~name =
   Format.sprintf "\n========== %s: %s ==========\n" kind name
 
-let normal_report ~kind ~name ~inferred_spec ~given_spec ~result =
+let normal_report ~kind ~name ~given_spec ~result =
   let header = report_header ~kind ~name in
-  let inferred_spec_string =
+  (* let inferred_spec_string =
     Format.asprintf
       "[ Inferred specification ]\n%a\n"
       pp_staged_spec inferred_spec
-  in
+  in *)
   let given_spec_string = match given_spec with
     | Some given_spec ->
         Format.asprintf
@@ -118,7 +118,7 @@ let normal_report ~kind ~name ~inferred_spec ~given_spec ~result =
   in
   let report = String.concat "" [
     header;
-    inferred_spec_string;
+    (* inferred_spec_string; *)
     given_spec_string;
     result_string;
   ] in
@@ -131,14 +131,14 @@ let truncate_name s =
     String.sub s 0 7 ^ "..." ^ String.sub s (l-10) 10
   else s
 
-let test_report ~kind ~name ~inferred_spec ~given_spec ~result =
-  ignore (kind, inferred_spec, given_spec);
+let test_report ~kind ~name  ~given_spec ~result =
+  ignore (kind, given_spec);
   indicate_if_test_failed result name;
   Format.printf "%20s: %s%s@." (truncate_name name) (string_of_bool result) (expected_false result name)
 
-let report_result ~kind ~name ~inferred_spec ~given_spec ~result =
+let report_result ~kind ~name  ~given_spec ~result =
   let report = if !test_mode then test_report else normal_report in
-  report ~kind ~name ~inferred_spec ~given_spec ~result;
+  report ~kind ~name ~given_spec ~result;
   Globals.Timing.update_totals ()
 
 let report_error ~kind ~name ~error =
@@ -201,12 +201,12 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
     ~default:prog in
      
   let given_spec = meth.m_spec in
-    let () = match given_spec  with
-  | None -> print_endline "end"
-  | Some s -> print_endline (string_of_staged_spec s) 
+    let initial_spec = match given_spec  with
+  | None -> failwith "must provide specs"
+  | Some s -> s
   in 
-  
-  let inferred_spec, result =
+  let result  = analyze_type_spec initial_spec meth in 
+  (* let inferred_spec, result =
     infer_and_check_method prog meth given_spec
   in
   (* after infference, if the method does not have a spec, then add
@@ -233,12 +233,11 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
       {prog with cp_predicates}
       (* prog *)
     end
-  in
+  in *)
   (* potentially report the normalized spec as well. Refactor *)
   report_result
     ~kind:"Function"
     ~name:meth.m_name
-    ~inferred_spec
     ~given_spec
     ~result;
   prog
@@ -255,7 +254,6 @@ let analyze_lemma (prog : core_program) (l : lemma) : core_program =
   report_result
     ~kind:"Lemma"
     ~name:l.l_name
-    ~inferred_spec:l.l_left
     ~given_spec:(Some l.l_right)
     ~result;
   prog
