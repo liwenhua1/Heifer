@@ -118,6 +118,8 @@ rule token = parse
       { EMP }
   | "not"
       {NOT}
+  | "$"
+      {MULTI}
   | int_literal as n
       { INT (int_of_string n) }
   | "ex" | "exists"

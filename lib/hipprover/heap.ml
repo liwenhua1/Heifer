@@ -57,12 +57,22 @@ let xpure (h : kappa) : pi =
   fst (run h)
 
 let rec find_var_in_heap (v:string) (h:kappa) = 
+  
   match h with
   | EmptyHeap -> []
   | PointsTo (x, t) ->
       if x = v then [t] else []
   | SepConj (a, b) ->
-      (find_var_in_heap v a) @ (find_var_in_heap v b)
+      (find_var_in_heap v a) @ (find_var_in_heap v b) 
+let rec check_alising v (s:pi) = 
+  let r = find_var_in_heap v (snd s) in 
+  if List.is_empty r then 
+     match (fst s) with 
+     | Atomic (EQ, a, b) -> if (return_var_name a.term_desc) = v then check_alising (return_var_name b.term_desc)
+  else r
+
+
+  
 
 let rec swap_var_name_in_heap (ori:string) (replace:string) (h:kappa) = 
   match h with

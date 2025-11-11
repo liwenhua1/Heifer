@@ -174,6 +174,7 @@ and staged_spec =
   | RaisingEff of (pi * kappa * instant * term)
   (* | IndPred of { name : string; args: term list } *)
   | TryCatch of (pi * kappa * trycatch * term)
+  | Multi of staged_spec * staged_spec
 (* copied here so visitors can be generated *)
 and typ = Types.typ = 
   | Any
@@ -186,7 +187,10 @@ and typ = Types.typ =
   | TConstr of string * typ list
   | TVar of string
 
-
+let return_var_name t = 
+  match t with 
+  |Var x -> x 
+  |_ -> failwith "must be var"
 [@@deriving
   visitors { variety = "map"; name = "map_spec" },
   visitors { variety = "reduce"; name = "reduce_spec" },

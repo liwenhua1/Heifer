@@ -55,6 +55,7 @@ open Hiptypes
 %token REF
 %token TYAN
 %token ARR
+%token MULTI
 %token EOF
 
 ///////////////////////////
@@ -201,7 +202,7 @@ term:
       { List.fold_right (fun v t -> BinOp (TCons, v, t)) items (Const Nil) }
   (* intended: function body spans maximally *)
   (* todo: remove the parens around function body *)
-  | FUN LPAREN args = separated_list(COMMA, LOWERCASE_IDENT) RPAREN MINUSGREATER LPAREN body=staged_spec RPAREN
+  | FUN LPAREN args = separated_list(COMMA, LOWERCASE_IDENT) RPAREN MINUSGREATER LPAREN body=single_staged_spec RPAREN
       { TLambda ("", args, Some body, None) }
 ;
 
@@ -255,12 +256,12 @@ fn:
     { (v, args) }
 ;
 
-staged_spec:
-  | EXISTS vs = LOWERCASE_IDENT* DOT s = staged_spec
+single_staged_spec:
+  | EXISTS vs = LOWERCASE_IDENT* DOT s = single_staged_spec
       { List.fold_right (fun v t -> Exists (v, t)) vs s }
-  | FORALL vs = LOWERCASE_IDENT* DOT s = staged_spec
+  | FORALL vs = LOWERCASE_IDENT* DOT s = single_staged_spec
       { List.fold_right (fun v t -> ForAll (v, t)) vs s }
-  | s1 = staged_spec DISJUNCTION s2 = staged_spec
+  | s1 = single_staged_spec DISJUNCTION s2 = single_staged_spec
       { Disjunction (s1, s2) }
   | REQUIRES s = state
       { let (p, k) = s in Require (p, k) }
@@ -268,22 +269,25 @@ staged_spec:
       { let (p, k) = s in NormalReturn (p, k) }
   | va = fn
       { let (v, args) = va in HigherOrder (v, args) }
-  | SHIFT LPAREN v = LOWERCASE_IDENT DOT s = staged_spec RPAREN
+  | SHIFT LPAREN v = LOWERCASE_IDENT DOT s = single_staged_spec RPAREN
       { (* TODO: shiftc *)
         let x = Variables.fresh_variable ~v:"x" "continuation argument" in
         Shift (true, v, s, x, NormalReturn (Atomic (EQ, Variables.res_var, Var x), EmptyHeap)) }
-  | RESET LPAREN s = staged_spec RPAREN
+  | RESET LPAREN s = single_staged_spec RPAREN
       { Reset s }
-  | s1 = staged_spec SEMI s2 = staged_spec
+  | s1 = single_staged_spec SEMI s2 = single_staged_spec
       { Sequence (s1, s2) }
-  | LET v = LOWERCASE_IDENT EQUAL s1 = staged_spec IN s2 = staged_spec
+  | LET v = LOWERCASE_IDENT EQUAL s1 = single_staged_spec IN s2 = single_staged_spec
       { Bind (v, s1, s2) }
-  | LPAREN s = staged_spec RPAREN
+  | LPAREN s = single_staged_spec RPAREN
       { s }
 ;
+staged_spec
+    : single_staged_spec {$1}
+   | staged_spec MULTI single_staged_spec {Multi ($1,$3)}
 
 lemma:
-  | name_params=fn EQUAL lhs=staged_spec LONGARROW rhs=staged_spec
+  | name_params=fn EQUAL lhs=single_staged_spec LONGARROW rhs=single_staged_spec
     { let (f, params) = name_params in
       let params =
         List.map (function Var s -> s | _ -> failwith "invalid lemma") params

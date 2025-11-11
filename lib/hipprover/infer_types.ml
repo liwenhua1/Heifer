@@ -538,6 +538,8 @@ and infer_types_staged_spec ss : (staged_spec * typ option) using_env =
         let* spec, result_type = infer_types_staged_spec spec in
         return (ForAll ((x, t), spec), result_type)
       end
+  | Multi (s1,s2) -> 
+      return (Multi (s1,s2), None)
   | RaisingEff _ | TryCatch _ -> failwith "infer_types_staged_spec: not implemented"
 
 (* re-declare to insert one final type simplification pass *)

@@ -199,14 +199,24 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
   let@ _ = suppress_error_if_not_debug
     ~on_error:(fun e -> report_error ~kind:"Function" ~name:meth.m_name ~error:(Printexc.to_string e))
     ~default:prog in
-     
+  
+  
   let given_spec = meth.m_spec in
-    let initial_spec = match given_spec  with
-  | None -> failwith "must provide specs"
-  | Some s -> s
+  let initial_spec = match given_spec  with
+    | None -> failwith "must provide specs"
+    | Some s -> s
+    in 
+  let rec spec_list spec = match spec with 
+      | Multi (s1,s2) -> spec_list s1 @ spec_list s2 
+      | _ -> [spec] 
+
   in 
+  let multi_spec = spec_list initial_spec in 
+
+  let process sp = 
   let open Hipprover.Forward_rules in
-  let _  = (analyze_type_spec initial_spec meth) in 
+  (* print_endline (string_of_staged_spec sp); *)
+  let _  = (analyze_type_spec sp meth) in 
   (* let inferred_spec, result =
     infer_and_check_method prog meth given_spec
   in
@@ -236,11 +246,14 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
     end
   in *)
   (* potentially report the normalized spec as well. Refactor *)
+  
   report_result
     ~kind:"Function"
     ~name:meth.m_name
-    ~given_spec
-    ~result:true;
+    ~given_spec: (Some sp)
+    ~result:true; 
+    in
+  List.iter (fun x-> process x) multi_spec;
   prog
 
 let check_lemma (prog : core_program) (l : lemma) : bool =

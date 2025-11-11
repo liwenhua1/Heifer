@@ -66,6 +66,7 @@ and retype_staged_spec (staged_spec : Hiptypes.staged_spec) : staged_spec =
   | Hiptypes.Reset x -> Reset (retype_staged_spec x)
   | Hiptypes.RaisingEff (p, k, ins, t) -> RaisingEff (retype_pi p, retype_kappa k, retype_instant ins, retype_term t)
   | Hiptypes.TryCatch (p, k, trycatch, t) -> TryCatch (retype_pi p, retype_kappa k, retype_trycatch trycatch, retype_term t)
+  | Hiptypes.Multi (s1, s2) -> Multi (retype_staged_spec s1, retype_staged_spec s2)
 and retype_constr_case ({ccase_pat; ccase_guard; ccase_expr} : Hiptypes.constr_case) : constr_case =
   { ccase_pat = retype_pattern ccase_pat;
     ccase_guard = Option.map retype_term ccase_guard;

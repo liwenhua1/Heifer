@@ -459,6 +459,7 @@ let remove_req (s:staged_spec) =
   | _ -> failwith "Type state only have req and forall"
 
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) = 
+   
     let _binders, init_state = find_all_binders spec in
     (* list_printer print_endline (List.fold_right (fun a r -> (fst a)::r) binders []); *)
   let rec forward state (body:core_lang_desc) : (staged_spec) = 
