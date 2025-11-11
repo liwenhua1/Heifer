@@ -11,6 +11,7 @@ open Utils
 open Utils.Hstdlib
 open Utils.Misc
 open Syntax
+open Heap
 
 (*
 open Normalize
@@ -80,7 +81,17 @@ let string_of_fvenv env =
   (string_of_list (string_of_pair string_of_disj_spec string_of_disj_spec) env.fv_match_obl)
   "<nyi>"
 *)
+let rec list_printer f alist = 
+  match alist with
+  | [] -> print_endline ""
+  | x::xs -> f x ; list_printer f xs 
 
+
+let print_bool b = 
+  print_endline (Bool.to_string b)
+
+let print_int b = 
+    print_endline (Int.to_string b)
 let create_fv_env fv_methods fv_predicates = {
   fv_methods;
   fv_predicates;
@@ -413,13 +424,34 @@ let rec forward (env: fvenv) (expr : core_lang): staged_spec * fvenv =
       let spec_body, env = forward env expr_body in
       Reset spec_body, env
 
-let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  staged_spec = 
-    let init_state = match spec with 
-    | Sequence (pre,_) -> pre 
-    | _ -> failwith "type verification must have single req and ens" in 
-  let rec forward state (body:core_lang_desc) : staged_spec = 
+let constant_to_singleton_type (v:Typed_core_ast.term) (s:(pi*kappa)) = 
+   let desc = match v.term_desc with 
+    |Const c -> Type (BaseTy (Consta c))
+    |Var v -> let r = find_in_state v s in 
+               if (fst r) = "h" then (Var v)
+               else (Var v)
+    | _ -> failwith "must be a constant" in 
+    {term_desc=desc;
+    term_type=v.term_type}
+                  
+let rec find_all_binders (s:staged_spec) = 
+  match s with 
+  | ForAll (b,s2) -> (b :: fst (find_all_binders s2), snd  (find_all_binders s2))
+  | Sequence (pre,_) -> ([], pre) 
+  | _ -> failwith "type verification must have single req and ens" 
+
+let remove_req (s:staged_spec) = 
+  match s with 
+  | Require (a,b) -> (a,b)
+  | _ -> failwith "Type state only have req and forall"
+
+let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec * bool) = 
+    let _binders, init_state = find_all_binders spec in
+    (* list_printer print_endline (List.fold_right (fun a r -> (fst a)::r) binders []); *)
+  let rec forward state (body:core_lang_desc) : (staged_spec* bool) = 
+    let () = print_endline (string_of_staged_spec (Require (fst state, snd state))) in
     match body with
-  | CValue _ -> failwith "to be implemented CValue"
+  | CValue v -> NormalReturn (res_eq (constant_to_singleton_type v state), EmptyHeap), true
   | CLet _ -> failwith "to be implemented CLet"
   | CSequence _ -> failwith "to be implemented CSequence"
   | CFunCall _ -> failwith "to be implemented CFunCall"
@@ -432,4 +464,7 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  staged_spec =
   | CLambda _ -> failwith "to be implemented CLambda"
   | _ -> failwith "not supported expressions"
   in 
-  forward init_state meth.m_body.core_desc 
+  let rs = forward (remove_req init_state) meth.m_body.core_desc in 
+  print_endline (string_of_staged_spec (fst rs)); rs
+
+

@@ -7,6 +7,12 @@ val split_find : string -> kappa -> (term * kappa) option
 
 val xpure : kappa -> pi
 
+val find_var_in_heap : string -> kappa -> term list
+
+val find_var_in_pure : string -> pi -> term list
+
+val find_in_state : string -> pi * kappa -> string * term
+
 (** [check id vars h1 h2 k] solves the heap entailment {m H_1 \vdash H_2 * F}.
   It may backtrack given existentially quantified locations on the right.
 

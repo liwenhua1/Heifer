@@ -1,3 +1,3 @@
-let id y = 
-  (*@ req ys -> # Any /\ x: # int;   ens res: # Any /\ x: # int@*)
-  y
+let id y = y
+  (*@  forall x. req y:#int;   ens res: # Any /\ x: # int@*)
+  

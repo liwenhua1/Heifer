@@ -56,6 +56,32 @@ let xpure (h : kappa) : pi =
   in
   fst (run h)
 
+let rec find_var_in_heap (v:string) (h:kappa) = 
+  match h with
+  | EmptyHeap -> []
+  | PointsTo (x, t) ->
+      if x = v then [t] else []
+  | SepConj (a, b) ->
+      (find_var_in_heap v a) @ (find_var_in_heap v b)
+
+let rec find_var_in_pure (v:string) (h:pi) = 
+  match h with
+  | Colon (x,t) -> if x = v then [t] else []
+  | And (a, b) ->
+       (find_var_in_pure v a) @ (find_var_in_pure v b)
+  | _ -> []
+
+let find_in_state (v:string) (s:(pi*kappa)) = 
+  let r1 = find_var_in_heap v (snd s) in 
+  match r1 with 
+  |x::_ -> ("h",x) 
+  | _ ->  (
+    let r2 = find_var_in_pure v (fst s) in 
+    match r2 with 
+    | x :: _ -> ("s",x) 
+    | _ -> failwith "spec error" 
+  )
+
 (*
 let rec check :
   string ->
