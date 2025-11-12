@@ -435,11 +435,12 @@ let constant_to_singleton_type (v:Typed_core_ast.term) (s:(pi*kappa)) =
     term_type=v.term_type}
 
 let constant_to_singleton_type_re (v:Typed_core_ast.term) (s:(pi*kappa)) = 
-  match v.term_desc with 
-    |Const c -> NormalReturn (res_eq (constant_to_singleton_type ({term_desc =Type (BaseTy (Consta c)); term_type=v.term_type}) s), snd s)
+  (* print_endline (string_of_term v) ; *)
+    match v.term_desc with 
+    |Const c -> NormalReturn (And (fst s, Colon ("res", (constant_to_singleton_type ({term_desc = (Const c); term_type=v.term_type}) s))), snd s)
     |Var c -> let r = find_in_state c s in 
-               if (fst r) = "h" then NormalReturn (res_eq (constant_to_singleton_type ({term_desc =(Var c); term_type= v.term_type}) s), snd s) 
-               else NormalReturn (Colon ("res", (snd r)), snd s) 
+               if (fst r) = "h" then NormalReturn (And (fst s, res_eq (constant_to_singleton_type ({term_desc =(Var c); term_type= v.term_type}) s)), snd s) 
+               else NormalReturn (And (fst s,Colon ("res", (snd r))), snd s) 
     | _ -> failwith "must be a constant" 
 
 let extract_return (s:staged_spec) = match s with 
@@ -475,9 +476,9 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
   
   | CFunCall _ -> failwith "to be implemented CFunCall"
   | CWrite _ -> failwith "to be implemented CWrite"
-  (* | CRef   *)
-      (* let x = (fresh_variable (), TConstr ("ref", [t.term_type])) in
-      Exists (x, NormalReturn (res_eq (var_of_binder x), PointsTo (ident_of_binder x, t))), env *)
+  | CRef t ->
+      let x = Typed_core_ast.map_ter_to_ty t in
+       NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type x; term_type = t.term_type})))
   | CRead  _ -> failwith "to be implemented CRead"
   (* effect start *)
   (* match e with | eff case... | constr case... *)

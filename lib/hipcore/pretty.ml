@@ -87,6 +87,7 @@ let rec string_of_base_type t =
     | IntBty -> "int"
     | BoolBty -> "bool"
     | TyStringBty -> "Str"
+    | Tvar s -> s
     | Consta c -> string_of_constant c
     | RefBty bty -> "ref(" ^ string_of_base_type bty ^ ")"
     | Tyvar t -> t

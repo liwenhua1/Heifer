@@ -30,6 +30,7 @@ and bty =
   | IntBty
   | BoolBty
   | TyStringBty
+  | Tvar of string
   | Consta of const
   | RefBty of bty
   | Tyvar of ty_var

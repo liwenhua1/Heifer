@@ -34,6 +34,7 @@ and bty = Untyped_core_ast.bty =
   | IntBty
   | BoolBty
   | TyStringBty
+  | Tvar of string
   | Consta of const
   | RefBty of bty
   | Tyvar of ty_var
@@ -210,3 +211,10 @@ let rec map_typ_to_ty typ1  =
   | TConstr (a,b) ->  (BaseTy (Defty (a, (List.map map_typ_to_ty b))))
   | TVar s ->  (BaseTy (Tyvar s))
   | _ -> failwith "unsupported constructor"
+
+let rec map_ter_to_ty t = 
+    match t.term_desc with
+    | Var v -> BaseTy (Tvar v)
+    | Const c -> BaseTy (Consta c) 
+    | Construct (name, terms) -> BaseTy (Defty (name, (List.map map_ter_to_ty terms)))
+    | _ -> map_typ_to_ty t.term_type

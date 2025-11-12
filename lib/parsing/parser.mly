@@ -157,6 +157,8 @@ bty:
     {TyStringBty}
   | c = const
     {Consta c}
+  | v = LOWERCASE_IDENT 
+    {Tvar v}
   | REF LPAREN v = bty RPAREN
     {RefBty v} 
   | v = ty_var
