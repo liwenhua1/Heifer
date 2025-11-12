@@ -64,12 +64,21 @@ let rec find_var_in_heap (v:string) (h:kappa) =
       if x = v then [t] else []
   | SepConj (a, b) ->
       (find_var_in_heap v a) @ (find_var_in_heap v b) 
-let rec check_alising v (s:pi) = 
-  let r = find_var_in_heap v (snd s) in 
-  if List.is_empty r then 
-     match (fst s) with 
-     | Atomic (EQ, a, b) -> if (return_var_name a.term_desc) = v then check_alising (return_var_name b.term_desc)
-  else r
+
+
+
+let rec find_alising v (h:pi) = 
+  match h with
+  | Atomic (EQ, a, b) -> if (Typed_core_ast.return_var_name a.term_desc) = v then [Typed_core_ast.return_var_name b.term_desc] else if (Typed_core_ast.return_var_name b.term_desc) = v then [Typed_core_ast.return_var_name a.term_desc] else []
+  | And (a, b) ->
+       (find_alising v a) @ (find_alising v b)
+  | _ -> []
+let rec check_alising (v:string list) (r:string list) (s:pi)  = 
+  match v with 
+  | [] -> r 
+  | x::xs -> let alised = find_alising x s in 
+             let current_v = List.fold_right (fun x acc -> if (List.exists (fun z -> if z = x then true else false ) r) then acc else x :: acc ) alised xs in check_alising current_v (x::r) s 
+
 
 
   
