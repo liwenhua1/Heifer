@@ -105,7 +105,7 @@ let rec swap_var_name_in_pure (ori:string) (replace:string) (s:pi) =
        And (swap_var_name_in_pure ori replace a, swap_var_name_in_pure ori replace b)
   | _ -> s
 
-
+s
 let find_in_state (v:string) (s:(pi*kappa)) = 
   let r1 = find_var_in_heap v (snd s) in 
   match r1 with 
