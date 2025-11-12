@@ -397,7 +397,7 @@ let run_ocaml_string s =
       let@ _ = Warnings.without_warnings in
       let typed_implementation = Compile_common.typecheck_impl info (prelude_items @ items) in
       let@ _ = Globals.Timing.(time overall_all) in
-      process_ocaml_structure typed_implementation.structure
+      process_ocaml_structure (typed_implementation.structure:Typedtree.structure)
     end
   with
     | exn -> Format.printf "%a\n" Location.report_exception exn
