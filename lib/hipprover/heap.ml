@@ -79,7 +79,10 @@ let rec check_alising (v:string list) (r:string list) (s:pi)  =
   | x::xs -> let alised = find_alising x s in 
              let current_v = List.fold_right (fun x acc -> if (List.exists (fun z -> if z = x then true else false ) r) then acc else x :: acc ) alised xs in check_alising current_v (x::r) s 
 
-
+let find_all_var_in_heap v (s:(pi * kappa)) = 
+  let alised = (check_alising [v] [] (fst s)) in
+  (* print_int (List.length alised); *)
+   List.fold_right (fun x acc -> find_var_in_heap x (snd s) @ acc) alised [] 
 
   
 
@@ -101,13 +104,15 @@ let rec find_var_in_pure (v:string) (h:pi) =
 let rec swap_var_name_in_pure (ori:string) (replace:string) (s:pi) = 
   match s with
   | Colon (x,t) -> if x = ori then Colon (replace,t) else Colon (x,t)
+  | Atomic (EQ, a, b) -> if (Typed_core_ast.return_var_name a.term_desc) = ori then Atomic (EQ, {term_desc=Var replace;term_type=a.term_type}, b) else if (Typed_core_ast.return_var_name b.term_desc) = ori then  Atomic (EQ, a, {term_desc=Var replace;term_type=b.term_type}) else s
+
   | And (a, b) ->
        And (swap_var_name_in_pure ori replace a, swap_var_name_in_pure ori replace b)
   | _ -> s
 
 
 let find_in_state (v:string) (s:(pi*kappa)) = 
-  let r1 = find_var_in_heap v (snd s) in 
+  let r1 = find_all_var_in_heap v s in 
   match r1 with 
   |x::_ -> ("h",x) 
   | _ ->  (

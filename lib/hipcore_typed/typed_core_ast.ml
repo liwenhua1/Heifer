@@ -187,13 +187,14 @@ and typ = Types.typ =
   | TConstr of string * typ list
   | TVar of string
 
-let return_var_name t = 
-  match t with 
-  |Var x -> x 
-  |_ -> failwith "must be var"
+
 [@@deriving
   visitors { variety = "map"; name = "map_spec" },
   visitors { variety = "reduce"; name = "reduce_spec" },
   visitors { variety = "mapreduce"; name = "mapreduce_spec" },
   ord]
 
+let return_var_name t = 
+  match t with 
+  |Var x -> x 
+  |_ -> failwith "must be var"
