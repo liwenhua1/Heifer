@@ -33,7 +33,7 @@ and bty =
   | Consta of const
   | RefBty of bty
   | Tyvar of ty_var
-  | Defty of name * bty list
+  | Defty of name * ty list
   (* TODO do we need a Poly variant for generics? *)
 
 and ty = 

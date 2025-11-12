@@ -90,9 +90,9 @@ let rec string_of_base_type t =
     | Consta c -> string_of_constant c
     | RefBty bty -> "ref(" ^ string_of_base_type bty ^ ")"
     | Tyvar t -> t
-    | Defty (a,b) -> a ^  string_of_list (fun x -> string_of_base_type x) b
+    | Defty (a,b) -> a ^  string_of_list (fun x -> string_of_ty x) b
 
-let rec string_of_ty t : string = 
+and string_of_ty t : string = 
   match t with 
   | BaseTy bty -> string_of_base_type bty
   | Union (t1, t2) -> string_of_ty t1 ^ "\/" ^ string_of_ty t2

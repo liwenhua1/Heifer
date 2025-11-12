@@ -137,8 +137,8 @@ opt_ty_var_list
 ;
 ty_var_list:
     
-    | bty {[$1]}
-    | ty_var_list COMMA bty {$1 @ [$3]}
+    | ty {[$1]}
+    | ty_var_list COMMA ty {$1 @ [$3]}
 
 bty: 
   | TOP

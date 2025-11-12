@@ -472,10 +472,12 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
     let new_state = swap_var_name_in_state "res" (fst x) current_state in 
     forward new_state expr2.core_desc
 
-  | CSequence _ -> failwith "to be implemented CSequence"
+  
   | CFunCall _ -> failwith "to be implemented CFunCall"
   | CWrite _ -> failwith "to be implemented CWrite"
-  | CRef _ -> failwith "to be implemented CRef"
+  (* | CRef   *)
+      (* let x = (fresh_variable (), TConstr ("ref", [t.term_type])) in
+      Exists (x, NormalReturn (res_eq (var_of_binder x), PointsTo (ident_of_binder x, t))), env *)
   | CRead  _ -> failwith "to be implemented CRead"
   (* effect start *)
   (* match e with | eff case... | constr case... *)

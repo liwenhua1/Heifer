@@ -37,7 +37,7 @@ and bty = Untyped_core_ast.bty =
   | Consta of const
   | RefBty of bty
   | Tyvar of ty_var
-  | Defty of name * bty list
+  | Defty of name * ty list
 
   (* TODO do we need a Poly variant for generics? *)
 
@@ -198,3 +198,15 @@ let return_var_name t =
   match t with 
   |Var x -> x 
   |_ -> failwith "must be var"
+
+let rec map_typ_to_ty typ1  =  
+  match typ1 with 
+  | Any ->  (BaseTy AnyBty)
+  | Unit ->  (BaseTy UnitBty)
+  | Int ->  (BaseTy IntBty)
+  | Bool ->  (BaseTy BoolBty)
+  | TyString ->  (BaseTy TyStringBty)
+  | Arrow (a,b)->  (ArrowTy (map_typ_to_ty a, map_typ_to_ty b))
+  | TConstr (a,b) ->  (BaseTy (Defty (a, (List.map map_typ_to_ty b))))
+  | TVar s ->  (BaseTy (Tyvar s))
+  | _ -> failwith "unsupported constructor"
