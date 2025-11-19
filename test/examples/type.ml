@@ -3,7 +3,7 @@ type h = |A
 
 
 
-let id2 y = y := "d"
+let id2 y= let x = !y in x 
  (*@ req y:#Ref[str]; ens res : # Ref[y] @*)
 
  let id y = let x = y in x;;
