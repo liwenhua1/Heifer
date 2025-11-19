@@ -441,6 +441,7 @@ let constant_to_singleton_type_re (v:Typed_core_ast.term) (s:(pi*kappa)) =
     |Var c -> let r = find_in_state c s in 
                if (fst r) = "h" then NormalReturn (And (fst s, res_eq (constant_to_singleton_type ({term_desc =(Var c); term_type= v.term_type}) s)), snd s) 
                else NormalReturn (And (fst s,Colon ("res", (snd r))), snd s) 
+    |Construct _ -> NormalReturn (And (fst s,Colon ("res", {term_desc = Typed_core_ast.Type (map_ter_to_ty v);term_type = v.term_type})), snd s) 
     | _ -> failwith "must be a constant" 
 
 let extract_return (s:staged_spec) = match s with 
@@ -479,7 +480,10 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
   | CRef t ->
       let x = Typed_core_ast.map_ter_to_ty t in
        NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type x; term_type = t.term_type})))
-  | CRead  _ -> failwith "to be implemented CRead"
+  | CRead x -> 
+      let r = find_in_state x  state in
+      if (fst r) = "h" then NormalReturn (And (fst state, res_eq (constant_to_singleton_type ({term_desc =(Var x); term_type= TConstr ("ref", [])}) state)), snd state) 
+               else NormalReturn (And (fst state,Colon ("res", (snd r))), snd state) 
   (* effect start *)
   (* match e with | eff case... | constr case... *)
   | CMatch _ -> failwith "to be implemented cmath"
