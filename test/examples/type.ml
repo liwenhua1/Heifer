@@ -7,9 +7,9 @@ let id y = let x = y in x;;
 let id2 y = let x = B in x
  (*@ req true; ens res : # Ref[y] @*)
 
-let string_of_int x = failwith "to be implemented"
+(* let string_of_int x = failwith "to be implemented" *)
  (*@ req true; ens res : # Ref[y] @*)
-let inc_inplace x = x := string_of_int !x +1
+(* let inc_inplace x = x := string_of_int !x +1 *)
  (*@ req true; ens res : # Ref[y] @*)
  
  (* let f t = 
