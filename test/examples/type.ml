@@ -1,11 +1,13 @@
 type h = |A 
          |B 
 
-let id y = let x = y in x;;
-  (*@  forall t. req y:#t';   ens res: # t'  $ req y:#str ; ens res:#str $ req y->#int; ens  y->#int /\res=y $ req y -> # List[(int \/ str)]; ens res = y /\ y -> # List[(int \/ str)] @*)
 
-let id2 y = y := 1 
- (*@ req y:#Ref[1]; ens res : # Ref[y] @*)
+
+let id2 y = y := "d"
+ (*@ req y:#Ref[str]; ens res : # Ref[y] @*)
+
+ let id y = let x = y in x;;
+  (*@  forall t. req y:#t';   ens res: # t'  $ req y:#str ; ens res:#str $ req y->#int; ens  y->#int /\res=y $ req y -> # List[(int \/ str)]; ens res = y /\ y -> # List[(int \/ str)] @*)
 
 (* let string_of_int x = failwith "to be implemented" *)
  (*@ req true; ens res : # Ref[y] @*)

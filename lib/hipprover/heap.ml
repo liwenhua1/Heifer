@@ -84,6 +84,11 @@ let find_all_var_in_heap v (s:(pi * kappa)) =
   (* print_int (List.length alised); *)
    List.fold_right (fun x acc -> find_var_in_heap x (snd s) @ acc) alised [] 
 
+let find_alised_var_in_heap v (s:(pi * kappa)) = 
+  let alised = (check_alising [v] [] (fst s)) in
+  (* print_int (List.length alised); *)
+   List.fold_right (fun x acc -> if not (List.is_empty (find_var_in_heap x (snd s))) then x else acc ) alised "" 
+
   
 
 let rec swap_var_name_in_heap (ori:string) (replace:string) (h:kappa) = 
@@ -93,6 +98,14 @@ let rec swap_var_name_in_heap (ori:string) (replace:string) (h:kappa) =
       if x=ori then PointsTo (replace, t) else  PointsTo (x, t)
   | SepConj (a, b) ->
       SepConj (swap_var_name_in_heap ori replace a, swap_var_name_in_heap ori replace b)
+
+let rec swap_content_in_heap (var:string) (contents:term) (h:kappa) = 
+  match h with
+  | EmptyHeap -> EmptyHeap
+  | PointsTo (x, t) ->
+      if x=var then PointsTo (x, contents) else  PointsTo (x, t)
+  | SepConj (a, b) ->
+      SepConj (swap_content_in_heap var contents a, swap_content_in_heap var contents b)
 
 let rec find_var_in_pure (v:string) (h:pi) = 
   match h with
@@ -126,6 +139,12 @@ let swap_var_name_in_state (ori:string) (replace:string) (s:pi*kappa) =
   let new_pi = swap_var_name_in_pure ori replace (fst s) in 
   let new_kappa = swap_var_name_in_heap ori replace (snd s) in 
   (new_pi,new_kappa)
+
+let swap_content_in_state (var:string) (contents:term) (s:pi*kappa) = 
+  let result = find_alised_var_in_heap var s in 
+  if result = "" then failwith "var not in heap" else
+  let new_kappa = swap_content_in_heap result contents (snd s) in 
+  (fst s,new_kappa)
   (*
 let rec check :
   string ->

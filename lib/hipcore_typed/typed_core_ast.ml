@@ -218,3 +218,36 @@ let rec map_ter_to_ty t =
     | Const c -> BaseTy (Consta c) 
     | Construct (name, terms) -> BaseTy (Defty (name, (List.map map_ter_to_ty terms)))
     | _ -> map_typ_to_ty t.term_type
+
+let rec check_two_base_types t1 t2= 
+    if t1 = t2 then true else match (t1,t2) with 
+    | (Consta ((Num _)), IntBty) 
+    | ((Consta TTrue),BoolBty)
+    | ((Consta TFalse),BoolBty)
+    | (Consta (TStr _), TyStringBty)
+    | (Bot,_)
+    | (_,Top)
+    -> true 
+    | (Defty (n1,l1),Defty (n2,l2)) -> if not (n1 = n2) then false else List.equal is_subtype l1 l2
+    | (Top,_) -> false 
+    | (_, AnyBty) -> true 
+    | _ -> false
+    
+and check_sub t1 t2 = match t2 with
+  | BaseTy t -> check_two_base_types t1 t 
+  | Union (s1,s2) -> check_sub t1 s1 || check_sub t1 s2
+  | Inter (s1,s2) -> check_sub t1 s1 && check_sub t1 s2
+  | Neg s -> not (check_sub t1 s) 
+  | ArrowTy _-> failwith "fun type to be implemented"
+
+and is_subtype t1 t2 = match t1 with 
+  | BaseTy t -> check_sub t t2 
+  | Union (x1,x2) -> is_subtype x1 t2 && is_subtype x2 t2
+  | Inter (x1,x2) -> is_subtype x1 t2 || is_subtype x2 t2
+  | Neg s -> not (is_subtype s t2)
+  | _ -> failwith "to be implemented"
+
+let get_type_from_terms t = 
+  match t with 
+  |Type x -> x 
+  |_ -> failwith "not type term"

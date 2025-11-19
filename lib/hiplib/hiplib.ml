@@ -217,6 +217,7 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
   let open Hipprover.Forward_rules in
   (* print_endline (string_of_staged_spec sp); *)
   let _  = (analyze_type_spec sp meth) in 
+  (* let () =  failwith "dddd" in *)
   (* let inferred_spec, result =
     infer_and_check_method prog meth given_spec
   in

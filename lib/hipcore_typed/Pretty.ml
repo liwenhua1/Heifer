@@ -36,7 +36,7 @@ and string_of_ty t : string =
   match t with 
   | BaseTy bty -> string_of_base_type bty
   | Union (t1, t2) -> string_of_ty t1 ^ "\/" ^ string_of_ty t2
-  | Inter (t1, t2) -> string_of_ty t1 ^ "\/" ^ string_of_ty t2
+  | Inter (t1, t2) -> string_of_ty t1 ^ "/\\" ^ string_of_ty t2
   | Neg t -> "not(" ^ string_of_ty t ^ ")"
   | ArrowTy (t1, t2) -> string_of_ty t1 ^ "->" ^ string_of_ty t2
 
