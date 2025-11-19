@@ -479,8 +479,8 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
   
   | CFunCall _ -> failwith "to be implemented CFunCall"
   | CWrite (x, t) -> let r = find_in_state x  state in 
-                     if (fst r) = "h" then NormalReturn (And (fst state, res_eq (constant_to_singleton_type ({term_desc =(Var x); term_type= TConstr ("ref", [])}) state)), snd state) 
-               else if (t.term_desc = (snd r).term_desc) then Require (fst state, snd state) else failwith "cannot change colon type"  
+                     if (fst r) = "h" then NormalReturn (And (fst state, res_eq (constant_to_singleton_type ({term_desc =(Var x); term_type= TConstr ("Ref", [])}) state)), snd state) 
+               else if (Type (BaseTy (Defty ("Ref",[(map_ter_to_ty t)]))) = (snd r).term_desc) then Require (fst state, snd state) else failwith "cannot change colon type"  
   | CRef t ->
       let x = Typed_core_ast.map_ter_to_ty t in
        NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type x; term_type = t.term_type})))
