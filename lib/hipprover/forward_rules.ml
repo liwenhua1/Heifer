@@ -471,12 +471,16 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
   | CLet (x, expr1, expr2) -> 
     let res = forward state expr1.core_desc in
     let current_state = extract_return res in 
-    let new_state = swap_var_name_in_state "res" (fst x) current_state in 
+    let old_var = fresh_variable () in
+    let change_x_to_old_x = swap_var_name_in_state (fst x) old_var current_state in
+    let new_state = swap_var_name_in_state "res" (fst x) change_x_to_old_x in 
     forward new_state expr2.core_desc
 
   
   | CFunCall _ -> failwith "to be implemented CFunCall"
-  | CWrite _ -> failwith "to be implemented CWrite"
+  | CWrite (x, t) -> let r = find_in_state x  state in 
+                     if (fst r) = "h" then NormalReturn (And (fst state, res_eq (constant_to_singleton_type ({term_desc =(Var x); term_type= TConstr ("ref", [])}) state)), snd state) 
+               else if (t.term_desc = (snd r).term_desc) then Require (fst state, snd state) else failwith "cannot change colon type"  
   | CRef t ->
       let x = Typed_core_ast.map_ter_to_ty t in
        NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type x; term_type = t.term_type})))

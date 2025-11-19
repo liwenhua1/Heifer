@@ -193,7 +193,7 @@ and typ = Types.typ =
   visitors { variety = "map"; name = "map_spec" },
   visitors { variety = "reduce"; name = "reduce_spec" },
   visitors { variety = "mapreduce"; name = "mapreduce_spec" },
-  ord]
+  ord, eq]
 
 let return_var_name t = 
   match t with 
