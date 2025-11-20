@@ -198,6 +198,7 @@ and typ = Types.typ =
 let return_var_name t = 
   match t with 
   |Var x -> x 
+  |Type (BaseTy (Tvar s)) -> s
   |_ -> failwith "must be var"
 
 let rec map_typ_to_ty typ1  =  

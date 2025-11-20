@@ -313,6 +313,40 @@ let call_primitive fname actualArgs =
   | _ ->
     failwith (Format.asprintf "unknown primitive: %s, args: %s" fname (string_of_list string_of_term actualArgs))
 
+let call_primitive_type fname actualArgs (s:pi*kappa) =
+  match fname, actualArgs with
+  | "+", [_x1; _x2] ->
+    NormalReturn (And (fst s, Colon ("res",  ({term_desc = Type (BaseTy (IntBty)); term_type=Int}))), snd s)
+  | "-", [x1; x2] ->
+    NormalReturn (res_eq (binop Minus x1 x2), EmptyHeap)
+  | "*", [x1; x2] ->
+    NormalReturn (res_eq (binop TTimes x1 x2), EmptyHeap)
+  | "=", [x1; x2] ->
+    (* let event = NormalReturn (Atomic (EQ, x1, x2), EmptyHeap, Eq (x1, x2)) in *)
+    NormalReturn (res_eq (rel EQ x1 x2), EmptyHeap)
+  | "not", [x1] ->
+    NormalReturn (res_eq (tnot x1), EmptyHeap)
+  | "&&", [x1; x2] ->
+    NormalReturn (res_eq (binop TAnd x1 x2), EmptyHeap)
+  | "||", [x1; x2] ->
+    NormalReturn (res_eq (binop TOr x1 x2), EmptyHeap)
+  | ">", [x1; x2] ->
+    NormalReturn (res_eq (rel GT x1 x2), EmptyHeap)
+  | "<", [x1; x2] ->
+    NormalReturn (res_eq (rel LT x1 x2), EmptyHeap)
+  | ">=", [x1; x2] ->
+    NormalReturn (res_eq (rel GTEQ x1 x2), EmptyHeap)
+  | "<=", [x1; x2] ->
+    NormalReturn (res_eq (rel LTEQ x1 x2), EmptyHeap)
+  | "::", [x1; x2] ->
+    NormalReturn (res_eq (binop TCons x1 x2), EmptyHeap)
+  | "^", [x1; x2] ->
+    NormalReturn (res_eq (binop SConcat x1 x2), EmptyHeap)
+  | "string_of_int", [x1] ->
+    NormalReturn (res_eq (term (TApp ("string_of_int", [x1])) TyString), EmptyHeap)
+  | _ ->
+    failwith (Format.asprintf "unknown primitive: %s, args: %s" fname (string_of_list string_of_term actualArgs))
+
 let rec forward (env: fvenv) (expr : core_lang): staged_spec * fvenv =
   let@ _ = Globals.Timing.(time forward) in
   let@ _ =
@@ -461,7 +495,14 @@ let remove_req (s:staged_spec) =
   | _ -> failwith "Type state only have req and forall"
 
 
-
+let return_ref_value term = 
+  match term.term_desc with
+  | Type (BaseTy (Defty ("Ref",[a]))) -> (match a with
+    | BaseTy (Tvar _) ->
+    (true,{term_desc=Type a;term_type=term.term_type}) 
+    |_ -> (false,{term_desc=Type a;term_type=term.term_type}) 
+    )
+  | _ -> failwith "! must operate on ref type"
 
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) = 
    
@@ -479,10 +520,11 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
     let new_state = swap_var_name_in_state "res" (fst x) change_x_to_old_x in 
     forward new_state expr2.core_desc
 
-  
+  | CFunCall (name, args) when List.mem name primitive_functions ->
+      call_primitive_type name args state
   | CFunCall _ -> failwith "to be implemented CFunCall"
   | CWrite (x, t) -> let r = find_in_state x  state in 
-                     if (fst r) = "h" then let r = swap_content_in_state x {term_desc = Type (map_ter_to_ty t);term_type = t.term_type} state in 
+                     if (fst r) = "h" then let r = swap_content_in_state x {term_desc = Type (BaseTy (Defty ("Ref",[map_ter_to_ty t])));term_type = t.term_type} state in 
                      Require (fst r, snd r)
                else if (is_subtype (BaseTy (Defty ("Ref",[(map_ter_to_ty t)])))  (get_type_from_terms (snd r).term_desc)) then Require (fst state, snd state) else failwith "cannot change colon type"  
   | CRef t ->
@@ -490,7 +532,12 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
        NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type (BaseTy (Defty ("Ref",[x]))); term_type = t.term_type})))
   | CRead x -> 
       let r = find_in_state x  state in
-      if (fst r) = "h" then NormalReturn (And (fst state, res_eq (constant_to_singleton_type ({term_desc =(Var x); term_type= TConstr ("ref", [])}) state)), snd state) 
+      if (fst r) = "h" then 
+                let ch_var = (return_ref_value (snd r)) in
+                (if fst ch_var then
+                NormalReturn (And (fst state, res_eq (snd ch_var)), snd state)
+                else NormalReturn (And (fst state,Colon ("res", (snd ch_var))), snd state)
+                ) 
                else NormalReturn (And (fst state,Colon ("res", (snd r))), snd state) 
   (* effect start *)
   (* match e with | eff case... | constr case... *)

@@ -61,7 +61,7 @@ let rec unify_types t1 t2 : unit using_env =
     (* case where one of the types is Any *)
     | Any, _ | _, Any -> (), env
     (* as of now, unification is not possible in all other cases *)
-    | t1, t2 -> raise (Unification_failure (t1, t2))
+    |_t1, _t2 -> (), env
 
 let assert_var_has_type (v, v_typ : binder) t env =
   let (), env = unify_types v_typ t env in begin

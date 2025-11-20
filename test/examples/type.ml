@@ -3,8 +3,8 @@ type h = |A
 
 
 
-let id2 y= let x = !y in x 
- (*@ req y:#Ref[str]; ens res : # Ref[y] @*)
+let id2 y= y := !y  
+ (*@ req y->#Ref[int]; ens res : # Ref[y] @*)
 
  let id y = let x = y in x;;
   (*@  forall t. req y:#t';   ens res: # t'  $ req y:#str ; ens res:#str $ req y->#int; ens  y->#int /\res=y $ req y -> # List[(int \/ str)]; ens res = y /\ y -> # List[(int \/ str)] @*)

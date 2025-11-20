@@ -1233,7 +1233,7 @@ and entailment_search : ?name:string -> tactic =
     let ps = apply_lemmas ps in
     apply_ent_rule ?name ps k
 
-let check_staged_spec_entailment ?name pctx inferred given =
+let check_staged_spec_entailment ?name (pctx:pctx) inferred given =
   let@ _ = Hipcore_typed.Globals.Timing.(time entail) in
   let@ _ =
     span (fun r ->
@@ -1247,3 +1247,6 @@ let check_staged_spec_entailment ?name pctx inferred given =
   | Some ps ->
     debug ~at:2 ~title:"proof found" "%s" (string_of_pstate ps);
     true
+
+(* let entail_for_types (left:pi*kappa) (right:pi*kappa) : (bool*pi*kappa) = 
+    match  *)
