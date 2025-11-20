@@ -279,6 +279,8 @@ let findTheActualArg4Acc_x_e_ret (arg:term) (specs:disj_spec): term =
 
 let res_eq t = Atomic (EQ, var "res" ~typ:t.term_type, t)
 
+let res_eq_x x t = Atomic (EQ, var x ~typ:t.term_type, t)
+
 let call_primitive fname actualArgs =
   match fname, actualArgs with
   | "+", [x1; x2] ->
@@ -313,39 +315,7 @@ let call_primitive fname actualArgs =
   | _ ->
     failwith (Format.asprintf "unknown primitive: %s, args: %s" fname (string_of_list string_of_term actualArgs))
 
-let call_primitive_type fname actualArgs (s:pi*kappa) =
-  match fname, actualArgs with
-  | "+", [_x1; _x2] ->
-    NormalReturn (And (fst s, Colon ("res",  ({term_desc = Type (BaseTy (IntBty)); term_type=Int}))), snd s)
-  | "-", [x1; x2] ->
-    NormalReturn (res_eq (binop Minus x1 x2), EmptyHeap)
-  | "*", [x1; x2] ->
-    NormalReturn (res_eq (binop TTimes x1 x2), EmptyHeap)
-  | "=", [x1; x2] ->
-    (* let event = NormalReturn (Atomic (EQ, x1, x2), EmptyHeap, Eq (x1, x2)) in *)
-    NormalReturn (res_eq (rel EQ x1 x2), EmptyHeap)
-  | "not", [x1] ->
-    NormalReturn (res_eq (tnot x1), EmptyHeap)
-  | "&&", [x1; x2] ->
-    NormalReturn (res_eq (binop TAnd x1 x2), EmptyHeap)
-  | "||", [x1; x2] ->
-    NormalReturn (res_eq (binop TOr x1 x2), EmptyHeap)
-  | ">", [x1; x2] ->
-    NormalReturn (res_eq (rel GT x1 x2), EmptyHeap)
-  | "<", [x1; x2] ->
-    NormalReturn (res_eq (rel LT x1 x2), EmptyHeap)
-  | ">=", [x1; x2] ->
-    NormalReturn (res_eq (rel GTEQ x1 x2), EmptyHeap)
-  | "<=", [x1; x2] ->
-    NormalReturn (res_eq (rel LTEQ x1 x2), EmptyHeap)
-  | "::", [x1; x2] ->
-    NormalReturn (res_eq (binop TCons x1 x2), EmptyHeap)
-  | "^", [x1; x2] ->
-    NormalReturn (res_eq (binop SConcat x1 x2), EmptyHeap)
-  | "string_of_int", [x1] ->
-    NormalReturn (res_eq (term (TApp ("string_of_int", [x1])) TyString), EmptyHeap)
-  | _ ->
-    failwith (Format.asprintf "unknown primitive: %s, args: %s" fname (string_of_list string_of_term actualArgs))
+
 
 let rec forward (env: fvenv) (expr : core_lang): staged_spec * fvenv =
   let@ _ = Globals.Timing.(time forward) in
@@ -504,6 +474,51 @@ let return_ref_value term =
     )
   | _ -> failwith "! must operate on ref type"
 
+let call_primitive_type fname actualArgs (st:pi*kappa) =
+  match fname, actualArgs with
+  | "+", [_x1; _x2] ->
+    NormalReturn (And (fst st, Colon ("res",  ({term_desc = Type (BaseTy (IntBty)); term_type=Int}))), snd st)
+  | "-", [_x1; _x2] ->
+     NormalReturn (And (fst st, Colon ("res",  ({term_desc = Type (BaseTy (IntBty)); term_type=Int}))), snd st)
+  | "*", [_x1; _x2] ->
+     NormalReturn (And (fst st, Colon ("res",  ({term_desc = Type (BaseTy (IntBty)); term_type=Int}))), snd st)
+  | "=", [_x1; _x2] ->
+      NormalReturn (And (fst st, Colon ("res",  ({term_desc = Type (BaseTy (BoolBty)); term_type=Bool}))), snd st)
+    (* not assign its comparison
+     let assi_var = (return_var_name x1.term_desc) in
+    let old_var = fresh_variable () in
+    let s = swap_var_name_in_state assi_var old_var st in
+    (* let event = NormalReturn (Atomic (EQ, x1, x2), EmptyHeap, Eq (x1, x2)) in *)
+       (match x2.term_desc with 
+    |Const c -> NormalReturn (And (fst s, Colon (assi_var, (constant_to_singleton_type ({term_desc = (Const c); term_type=x2.term_type}) s))), snd s)
+    |Var c -> let r = find_in_state c s in 
+               if (fst r) = "h" then NormalReturn (And (fst s, res_eq_x assi_var (constant_to_singleton_type ({term_desc =(Var c); term_type= x2.term_type}) s)), snd s) 
+               else 
+                (NormalReturn (And (fst s,Colon (assi_var, (snd r))), snd s)) 
+    |Construct _ -> NormalReturn (And (fst s,Colon (assi_var, {term_desc = Typed_core_ast.Type (map_ter_to_ty x2);term_type = x2.term_type})), snd s) 
+    | _ -> failwith "must be a constant" ) *)
+  | "not", [x1] ->
+    NormalReturn (res_eq (tnot x1), EmptyHeap)
+  | "&&", [x1; x2] ->
+    NormalReturn (res_eq (binop TAnd x1 x2), EmptyHeap)
+  | "||", [x1; x2] ->
+    NormalReturn (res_eq (binop TOr x1 x2), EmptyHeap)
+  | ">", [x1; x2] ->
+    NormalReturn (res_eq (rel GT x1 x2), EmptyHeap)
+  | "<", [x1; x2] ->
+    NormalReturn (res_eq (rel LT x1 x2), EmptyHeap)
+  | ">=", [x1; x2] ->
+    NormalReturn (res_eq (rel GTEQ x1 x2), EmptyHeap)
+  | "<=", [x1; x2] ->
+    NormalReturn (res_eq (rel LTEQ x1 x2), EmptyHeap)
+  | "::", [x1; x2] ->
+    NormalReturn (res_eq (binop TCons x1 x2), EmptyHeap)
+  | "^", [x1; x2] ->
+    NormalReturn (res_eq (binop SConcat x1 x2), EmptyHeap)
+  | "string_of_int", [x1] ->
+    NormalReturn (res_eq (term (TApp ("string_of_int", [x1])) TyString), EmptyHeap)
+  | _ ->
+    failwith (Format.asprintf "unknown primitive: %s, args: %s" fname (string_of_list string_of_term actualArgs))  
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) = 
    
     let _binders, init_state = find_all_binders spec in
