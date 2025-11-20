@@ -244,7 +244,7 @@ and is_subtype t1 t2 = match t1 with
   | BaseTy t -> check_sub t t2 
   | Union (x1,x2) -> is_subtype x1 t2 && is_subtype x2 t2
   | Inter (x1,x2) -> is_subtype x1 t2 || is_subtype x2 t2
-  | Neg s -> not (is_subtype s t2)
+  | Neg s -> not (is_subtype s t2) (*not correct placeholder only*)
   | _ -> failwith "to be implemented"
 
 let get_type_from_terms t = 

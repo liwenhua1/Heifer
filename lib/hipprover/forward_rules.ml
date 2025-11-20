@@ -460,6 +460,9 @@ let remove_req (s:staged_spec) =
   | Require (a,b) -> (a,b)
   | _ -> failwith "Type state only have req and forall"
 
+
+
+
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) = 
    
     let _binders, init_state = find_all_binders spec in
@@ -497,5 +500,7 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) =
   in 
   let rs = forward (remove_req init_state) meth.m_body.core_desc in 
   print_endline (string_of_staged_spec (rs)); rs
+
+
 
 

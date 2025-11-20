@@ -85,9 +85,9 @@ let new_pctx () =
 
 let has_been_unfolded pctx name _lr =
   pctx.unfolded
-  |> List.find_opt
+  |> (List.find_opt
        (* (fun (u, lr1) -> u = name && lr = lr1) *)
-       (fun (Use u) -> u = name)
+       (fun (Use u) -> u = name))
   |> Option.is_some
 
 let has_induction_hypothesis pctx name =
