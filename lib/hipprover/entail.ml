@@ -271,6 +271,26 @@ let derive_predicate m_name m_params f =
   in
   res
 
+let derive_predicate_type m_name m_params f =
+  let new_spec =  f in
+  let@ _ =
+    Debug.span (fun res ->
+        debug ~at:2
+          ~title:(Format.asprintf "derive predicate %s" m_name)
+          "%s\n\n%s"
+          (string_of_staged_spec new_spec)
+          (string_of_result string_of_pred res))
+  in
+  let res =
+    {
+      p_name = m_name;
+      p_params = m_params;
+      p_body = new_spec;
+      p_rec = (find_rec m_name)#visit_staged_spec () new_spec;
+    }
+  in
+  res
+
 let lambda_to_rule m_name m_params f =
   derive_predicate m_name m_params f |> pred_to_rule
 

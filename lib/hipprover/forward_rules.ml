@@ -519,7 +519,7 @@ let call_primitive_type fname actualArgs (st:pi*kappa) =
     NormalReturn (res_eq (term (TApp ("string_of_int", [x1])) TyString), EmptyHeap)
   | _ ->
     failwith (Format.asprintf "unknown primitive: %s, args: %s" fname (string_of_list string_of_term actualArgs))  
-let analyze_type_spec (spec:staged_spec) (meth:meth_def) :  (staged_spec ) = 
+let analyze_type_spec (spec:staged_spec) (meth:meth_def) (_prog:core_program):  (staged_spec ) = 
    
     let _binders, init_state = find_all_binders spec in
     (* list_printer print_endline (List.fold_right (fun a r -> (fst a)::r) binders []); *)

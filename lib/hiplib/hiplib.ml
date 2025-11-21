@@ -216,7 +216,9 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
   let process sp = 
   let open Hipprover.Forward_rules in
   (* print_endline (string_of_staged_spec sp); *)
-  let _  = (analyze_type_spec sp meth) in 
+  let _  = (analyze_type_spec sp meth prog) in 
+  
+  (* let cp_predicates = SMap.add meth.m_name sp prog.cp_predicates in *)
   (* let () =  failwith "dddd" in *)
   (* let inferred_spec, result =
     infer_and_check_method prog meth given_spec
@@ -255,6 +257,9 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
     ~result:true; 
     in
   List.iter (fun x-> process x) multi_spec;
+  let pred = Hipprover.Entail.derive_predicate_type meth.m_name meth.m_params initial_spec in 
+  let cp_predicates = SMap.add meth.m_name pred prog.cp_predicates in
+  let prog = {prog with cp_predicates} in
   prog
 
 let check_lemma (prog : core_program) (l : lemma) : bool =
