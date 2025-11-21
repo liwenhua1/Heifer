@@ -176,6 +176,7 @@ and staged_spec =
   (* | IndPred of { name : string; args: term list } *)
   | TryCatch of (pi * kappa * trycatch * term)
   | Multi of staged_spec * staged_spec
+  | Assume of staged_spec
 (* copied here so visitors can be generated *)
 and typ = Types.typ = 
   | Any

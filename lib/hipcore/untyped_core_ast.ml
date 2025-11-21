@@ -149,6 +149,7 @@ and staged_spec =
   (* | IndPred of { name : string; args: term list } *)
   | TryCatch of (pi * kappa * trycatch * term)
   | Multi of staged_spec * staged_spec
+  | Assume of staged_spec
 
 (* and spec = stagedSpec list
 and disj_spec = spec list *)

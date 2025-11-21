@@ -62,6 +62,8 @@ rule token = parse
         {STRBTY}
   | "ref"
         {REF}
+  | "assume"
+        {ASSUME}
   | ty_var as v 
         {TYVAR v}
   | blank +

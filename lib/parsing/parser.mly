@@ -23,6 +23,7 @@ open Hiptypes
 %token COMMA
 %token COLON
 %token NOT
+%token ASSUME
 
 
 %token TRUE
@@ -283,10 +284,13 @@ single_staged_spec:
       { Bind (v, s1, s2) }
   | LPAREN s = single_staged_spec RPAREN
       { s }
+  
 ;
 staged_spec
     : single_staged_spec {$1}
    | staged_spec MULTI single_staged_spec {Multi ($1,$3)}
+   | ASSUME s=staged_spec 
+      {Assume s}
 
 lemma:
   | name_params=fn EQUAL lhs=single_staged_spec LONGARROW rhs=single_staged_spec

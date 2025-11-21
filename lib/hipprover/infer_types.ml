@@ -540,6 +540,7 @@ and infer_types_staged_spec ss : (staged_spec * typ option) using_env =
       end
   | Multi (s1,s2) -> 
       return (Multi (s1,s2), None)
+  | Assume s -> return (Assume s, None)
   | RaisingEff _ | TryCatch _ -> failwith "infer_types_staged_spec: not implemented"
 
 (* re-declare to insert one final type simplification pass *)

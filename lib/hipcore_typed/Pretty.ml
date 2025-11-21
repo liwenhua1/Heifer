@@ -322,7 +322,8 @@ module With_types = struct
     | Sequence (s1, s2) -> Format.sprintf "%s; %s" (string_of_staged_spec s1) (string_of_staged_spec s2)
     | Bind (v, expr, body) -> Format.sprintf "let %s = (%s) in (%s)" (string_of_binder v) (string_of_staged_spec expr) (string_of_staged_spec body)
     | Disjunction (lhs, rhs) -> Format.sprintf "(%s) \\/ (%s)" (string_of_staged_spec lhs) (string_of_staged_spec rhs)
-     | Multi (s1,s2) -> Format.sprintf "%s $ %s" (string_of_staged_spec s1)  (string_of_staged_spec s2) 
+    | Multi (s1,s2) -> Format.sprintf "%s $ %s" (string_of_staged_spec s1)  (string_of_staged_spec s2) 
+    | Assume s -> string_of_staged_spec s
   and string_of_pattern (p : pattern) : string =
     let desc = match p.pattern_desc with
     | PAny -> "_"

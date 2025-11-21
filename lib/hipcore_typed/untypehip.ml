@@ -130,6 +130,7 @@ match s with
 | TryCatch (phi, h, tc, t) ->
     Hiptypes.TryCatch (untype_pi phi, untype_kappa h, untype_trycatch tc, untype_term t)
 | Multi (s1, s2) -> Hiptypes.Multi (untype_staged_spec s1, untype_staged_spec s2)
+| Assume s -> untype_staged_spec s
 
 let untype_state ((p, k) : state) : Hiptypes.state  =
   (untype_pi p, untype_kappa k)

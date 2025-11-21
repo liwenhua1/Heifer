@@ -213,10 +213,14 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
   in 
   let multi_spec = spec_list initial_spec in 
 
-  let process sp = 
-  let open Hipprover.Forward_rules in
+  let process sp need_verify = 
+  let _r = 
+     if need_verify then 
+        let open Hipprover.Forward_rules in
   (* print_endline (string_of_staged_spec sp); *)
-  let _  = (analyze_type_spec sp meth prog) in 
+        (analyze_type_spec sp meth prog) else 
+        sp
+        in
   
   (* let cp_predicates = SMap.add meth.m_name sp prog.cp_predicates in *)
   (* let () =  failwith "dddd" in *)
@@ -256,11 +260,21 @@ let analyze_method (prog : core_program) (meth : meth_def) : core_program =
     ~given_spec: (Some sp)
     ~result:true; 
     in
-  List.iter (fun x-> process x) multi_spec;
+  (
+    match initial_spec with | Assume _ ->
+  (* List.iter (fun x-> process x) multi_spec; *)
+  List.iter (fun x-> process x false) multi_spec;
   let pred = Hipprover.Entail.derive_predicate_type meth.m_name meth.m_params initial_spec in 
   let cp_predicates = SMap.add meth.m_name pred prog.cp_predicates in
   let prog = {prog with cp_predicates} in
   prog
+  | _ -> 
+  List.iter (fun x-> process x true) multi_spec;
+  let pred = Hipprover.Entail.derive_predicate_type meth.m_name meth.m_params initial_spec in 
+  let cp_predicates = SMap.add meth.m_name pred prog.cp_predicates in
+  let prog = {prog with cp_predicates} in
+  prog
+  )
 
 let check_lemma (prog : core_program) (l : lemma) : bool =
   let open Hipprover.Entail in
