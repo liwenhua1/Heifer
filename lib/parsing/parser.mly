@@ -230,12 +230,16 @@ pi:
       { p }
   | v = LOWERCASE_IDENT COLON t = term
       { Colon (v, t)}
+  | v = TYVAR COLON t = term
+      { Colon (v, t)}
 ;
 
 kappa:
   | EMP
       { EmptyHeap }
   | v = LOWERCASE_IDENT MINUSGREATER t = term
+      { PointsTo (v, t) }
+  | v = TYVAR MINUSGREATER t = term
       { PointsTo (v, t) }
   | k1 = kappa STAR k2 = kappa
       { SepConj (k1, k2) }

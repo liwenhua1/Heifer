@@ -12,6 +12,7 @@ open Utils.Hstdlib
 open Utils.Misc
 open Syntax
 open Heap
+module StringMap = Map.Make(String)
 
 (*
 open Normalize
@@ -541,7 +542,15 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (_prog:core_program):  
   | CWrite (x, t) -> let r = find_in_state x  state in 
                      if (fst r) = "h" then let r = swap_content_in_state x {term_desc = Type (BaseTy (Defty ("Ref",[map_ter_to_ty t])));term_type = t.term_type} state in 
                      Require (fst r, snd r)
-               else if (is_subtype (BaseTy (Defty ("Ref",[(map_ter_to_ty t)])))  (get_type_from_terms (snd r).term_desc)) then Require (fst state, snd state) else failwith "cannot change colon type"  
+               else 
+                (try
+                  (if (is_subtype (BaseTy (Defty ("Ref",[(map_ter_to_ty t)])))  (get_type_from_terms (snd r).term_desc)
+                ) then Require (fst state, snd state) else failwith "cannot change colon type"  )
+                with Unification (_,b) -> (
+                  print_endline b;
+                  print_endline (string_of_term t);
+                  let st = unify_var_name_in_state b t state in 
+                    Require (fst st, snd st)))
   | CRef t ->
       let x = Typed_core_ast.map_ter_to_ty t in
        NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type (BaseTy (Defty ("Ref",[x]))); term_type = t.term_type})))
@@ -564,5 +573,27 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (_prog:core_program):  
   print_endline (string_of_staged_spec (rs)); rs
 
 
+(* let unify_ty (f:staged_spec) (var:string) (target:string) = 
+    let change_for_state (v:string) (t:string) (s:(pi*kappa)) = 
+      swap_var_name_in_state *)
 
+
+(* let entail_type (left:pi*kappa) (right:pi*kappa) (mapping: (string*string) list): (bool * (pi*kappa)) = 
+  let rec check_local maplist=
+  match maplist with
+  | [] -> (true, [])
+  | (a,p) :: xs -> let t1 = get_type_from_terms (snd (find_in_state a left)).term_desc in 
+                   let t2 = get_type_from_terms (snd (find_in_state p right)).term_desc in 
+                   let r = is_subtype t1 t2 in 
+                   if r then
+                   let (r1,r2) = check_local xs in 
+                   (true && r1, p::r2) 
+                   else (false, []) 
+                  in 
+  let process_one =check_local mapping in 
+  if not (fst process_one) then failwith "ential fail"
+  else    *)
+  
+
+                         
 

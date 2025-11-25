@@ -1,6 +1,7 @@
 open Hipcore
 
 
+
 [@@@warning "-17"]
 (* can also appear in pi *)
 type bin_rel_op = Hiptypes.bin_rel_op =  GT | LT | EQ | GTEQ | LTEQ
@@ -220,7 +221,8 @@ let rec map_ter_to_ty t =
     | Const c -> BaseTy (Consta c) 
     | Construct (name, terms) -> BaseTy (Defty (name, (List.map map_ter_to_ty terms)))
     | _ -> map_typ_to_ty t.term_type
-
+    
+exception Unification of (bty * string)
 let rec check_two_base_types t1 t2= 
     if t1 = t2 then true else match (t1,t2) with 
     | (Consta ((Num _)), IntBty) 
@@ -229,7 +231,8 @@ let rec check_two_base_types t1 t2=
     | (Consta (TStr _), TyStringBty)
     | (Bot,_)
     | (_,Top)
-    -> true 
+    -> true
+     | (a,Tyvar t) -> raise (Unification (a,t)) 
     | (Defty (n1,l1),Defty (n2,l2)) -> if not (n1 = n2) then false else List.equal is_subtype l1 l2
     | (Top,_) -> false 
     | (_, AnyBty) -> true 

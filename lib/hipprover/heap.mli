@@ -11,11 +11,15 @@ val find_var_in_heap : string -> kappa -> term list
 
 val find_var_in_pure : string -> pi -> term list
 
+val check_alising : name list -> name list -> pi -> name list
+
 val find_in_state : string -> pi * kappa -> string * term
 
 val swap_var_name_in_state : name -> name -> pi * kappa -> pi * kappa
 
 val swap_content_in_state : ty_var -> term -> pi * kappa -> pi * kappa
+
+val unify_var_name_in_state: name -> term -> pi * kappa -> pi * kappa
 
 (** [check id vars h1 h2 k] solves the heap entailment {m H_1 \vdash H_2 * F}.
   It may backtrack given existentially quantified locations on the right.

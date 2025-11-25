@@ -68,12 +68,14 @@ let rec find_var_in_heap (v:string) (h:kappa) =
 
 
 let rec find_alising v (h:pi) = 
+  (*give v, find all x that x=v relation in pi*)
   match h with
   | Atomic (EQ, a, b) -> if (Typed_core_ast.return_var_name a.term_desc) = v then [Typed_core_ast.return_var_name b.term_desc] else if (Typed_core_ast.return_var_name b.term_desc) = v then [Typed_core_ast.return_var_name a.term_desc] else []
   | And (a, b) ->
        (find_alising v a) @ (find_alising v b)
   | _ -> []
 let rec check_alising (v:string list) (r:string list) (s:pi)  = 
+  (*give v, find all x that x=>v relation in pi*)
   match v with 
   | [] -> r 
   | x::xs -> let alised = find_alising x s in 
@@ -145,6 +147,65 @@ let swap_content_in_state (var:string) (contents:term) (s:pi*kappa) =
   if result = "" then failwith "var not in heap" else
   let new_kappa = swap_content_in_heap result contents (snd s) in 
   (fst s,new_kappa)
+
+let rec unify_terms_for_defty (ori:string) (args: ty list) (replace:ty) = 
+  match args with 
+  | [] -> [] 
+  | x::xs -> (
+    match x with 
+    | BaseTy (Tyvar t) -> if t = ori then replace::(unify_terms_for_defty ori xs replace) else x::(unify_terms_for_defty ori xs replace)
+    | BaseTy (Defty (a, ty_list)) -> BaseTy (Defty (a, unify_terms_for_defty ori ty_list replace)) ::  (unify_terms_for_defty ori xs replace) 
+    | _ -> x:: (unify_terms_for_defty ori xs replace) 
+  )
+
+let rec unify_terms_in_heap (ori:string) (replace:ty) (s:kappa) = 
+  match s with
+  | PointsTo (x,t) -> (match t.term_desc with 
+     |Type (BaseTy (Tyvar a)) -> if a = ori then PointsTo (x, {term_type=t.term_type;term_desc= Type replace}) else s
+     |Type (BaseTy (Defty (a,b)))  ->  let des = Type (BaseTy (Defty (a, unify_terms_for_defty ori b replace))) in PointsTo (x,{term_desc=des;term_type = t.term_type})
+     | _ -> s
+     )
+  | SepConj (s1,s2) -> SepConj (unify_terms_in_heap ori replace s1, unify_terms_in_heap ori replace s2)
+  | _ -> s
+
+let rec unify_var_name_in_pure (ori:string) (replace:ty) (s:pi) = 
+  match s with
+  | Colon (x,t) ->
+     (match t.term_desc with 
+     |Type (BaseTy (Tyvar a)) -> if a = ori then Colon (x, {term_type=t.term_type;term_desc= Type replace}) else s
+     |Type (BaseTy (Defty (a,b)))  ->  let des = Type (BaseTy (Defty (a, unify_terms_for_defty ori b replace))) in Colon (x,{term_desc=des;term_type = t.term_type})
+     | _ -> s
+     )
+  (* | Atomic (EQ, a, b) -> if (Typed_core_ast.return_var_name a.term_desc) = ori then Atomic (EQ, {term_desc=Var replace;term_type=a.term_type}, b) else if (Typed_core_ast.return_var_name b.term_desc) = ori then  Atomic (EQ, a, {term_desc=Var replace;term_type=b.term_type}) else s *)
+
+  | And (a, b) ->
+       And (unify_var_name_in_pure ori replace a, unify_var_name_in_pure ori replace b)
+  | _ -> s
+
+let unify_var_name_in_state (ori:string) (replace:term) (s:pi*kappa) = 
+  let process_for_var_replace = (
+  match replace.term_desc with 
+  | Var x -> let new_pi = swap_var_name_in_pure ori x (fst s) in 
+                              let new_kappa = swap_var_name_in_heap ori x (snd s) in 
+                              
+              let pi = unify_var_name_in_pure ori (BaseTy (Tvar x)) (new_pi) in 
+              let kappa =  unify_terms_in_heap ori (BaseTy (Tvar x)) (new_kappa) in 
+              (pi,kappa)
+
+                
+  | _ -> (fst s, snd s)
+  ) in
+
+ let pi = match replace.term_desc with 
+  | Type a -> unify_var_name_in_pure ori a (fst process_for_var_replace) 
+  | _ -> fst process_for_var_replace in
+  
+ let kappa =  match replace.term_desc with 
+  | Type a -> unify_terms_in_heap ori a (snd process_for_var_replace) 
+  | _ -> snd process_for_var_replace
+  in 
+ (pi,kappa)
+
   (*
 let rec check :
   string ->
