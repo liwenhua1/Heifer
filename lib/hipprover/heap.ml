@@ -61,7 +61,7 @@ let rec find_var_in_heap (v:string) (h:kappa) =
   match h with
   | EmptyHeap -> []
   | PointsTo (x, t) ->
-      if x = v then [t] else []
+      if x = v then [(x,t)] else []
   | SepConj (a, b) ->
       (find_var_in_heap v a) @ (find_var_in_heap v b) 
 
@@ -111,7 +111,7 @@ let rec swap_content_in_heap (var:string) (contents:term) (h:kappa) =
 
 let rec find_var_in_pure (v:string) (h:pi) = 
   match h with
-  | Colon (x,t) -> if x = v then [t] else []
+  | Colon (x,t) -> if x = v then [(x,t)] else []
   | And (a, b) ->
        (find_var_in_pure v a) @ (find_var_in_pure v b)
   | _ -> []

@@ -7,13 +7,13 @@ val split_find : string -> kappa -> (term * kappa) option
 
 val xpure : kappa -> pi
 
-val find_var_in_heap : string -> kappa -> term list
+val find_var_in_heap : ty_var -> kappa -> (ty_var * term) list
 
-val find_var_in_pure : string -> pi -> term list
+val find_var_in_pure : string -> pi -> (ty_var * term) list
 
 val check_alising : name list -> name list -> pi -> name list
 
-val find_in_state : string -> pi * kappa -> string * term
+val find_in_state : string -> pi * kappa -> string * (ty_var * term)
 
 val swap_var_name_in_state : name -> name -> pi * kappa -> pi * kappa
 

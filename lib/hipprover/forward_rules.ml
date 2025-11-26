@@ -434,7 +434,7 @@ let constant_to_singleton_type (v:Typed_core_ast.term) (s:(pi*kappa)) =
     |Const c -> Type (BaseTy (Consta c))
     |Var v -> let r = find_in_state v s in 
                if (fst r) = "h" then (Var v)
-               else (snd r).term_desc
+               else (snd (snd r)).term_desc
     | _ -> failwith "must be a constant" in 
     {term_desc=desc;
     term_type=v.term_type}
@@ -445,7 +445,7 @@ let constant_to_singleton_type_re (v:Typed_core_ast.term) (s:(pi*kappa)) =
     |Const c -> NormalReturn (And (fst s, Colon ("res", (constant_to_singleton_type ({term_desc = (Const c); term_type=v.term_type}) s))), snd s)
     |Var c -> let r = find_in_state c s in 
                if (fst r) = "h" then NormalReturn (And (fst s, res_eq (constant_to_singleton_type ({term_desc =(Var c); term_type= v.term_type}) s)), snd s) 
-               else NormalReturn (And (fst s,Colon ("res", (snd r))), snd s) 
+               else NormalReturn (And (fst s,Colon ("res", (snd (snd r)))), snd s) 
     |Construct _ -> NormalReturn (And (fst s,Colon ("res", {term_desc = Typed_core_ast.Type (map_ter_to_ty v);term_type = v.term_type})), snd s) 
     | _ -> failwith "must be a constant" 
 
@@ -458,6 +458,12 @@ let rec find_all_binders (s:staged_spec) =
   match s with 
   | ForAll (b,s2) -> (b :: fst (find_all_binders s2), snd  (find_all_binders s2))
   | Sequence (pre,_) -> ([], pre) 
+  | _ -> failwith "type verification must have single req and ens" 
+
+let rec find_pre_post (s:staged_spec) = 
+  match s with 
+  | ForAll (_,s2) -> find_pre_post s2
+  | Sequence (Require (pre_pi,pre_kappa), NormalReturn (post_pi,post_kappa)) -> ((pre_pi,pre_kappa), (post_pi,post_kappa)) 
   | _ -> failwith "type verification must have single req and ens" 
 
 let remove_req (s:staged_spec) = 
@@ -544,7 +550,7 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (_prog:core_program):  
                      Require (fst r, snd r)
                else 
                 (try
-                  (if (is_subtype (BaseTy (Defty ("Ref",[(map_ter_to_ty t)])))  (get_type_from_terms (snd r).term_desc)
+                  (if (is_subtype (BaseTy (Defty ("Ref",[(map_ter_to_ty t)])))  (get_type_from_terms (snd (snd r)).term_desc)
                 ) then Require (fst state, snd state) else failwith "cannot change colon type"  )
                 with Unification (_,b) -> (
                   print_endline b;
@@ -557,12 +563,12 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (_prog:core_program):  
   | CRead x -> 
       let r = find_in_state x  state in
       if (fst r) = "h" then 
-                let ch_var = (return_ref_value (snd r)) in
+                let ch_var = (return_ref_value (snd (snd r))) in
                 (if fst ch_var then
                 NormalReturn (And (fst state, res_eq (snd ch_var)), snd state)
                 else NormalReturn (And (fst state,Colon ("res", (snd ch_var))), snd state)
                 ) 
-               else NormalReturn (And (fst state,Colon ("res", (snd r))), snd state) 
+               else NormalReturn (And (fst state,Colon ("res", (snd (snd r)))), snd state) 
   (* effect start *)
   (* match e with | eff case... | constr case... *)
   | CMatch _ -> failwith "to be implemented cmath"
@@ -576,23 +582,62 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (_prog:core_program):  
 (* let unify_ty (f:staged_spec) (var:string) (target:string) = 
     let change_for_state (v:string) (t:string) (s:(pi*kappa)) = 
       swap_var_name_in_state *)
+let check_subtyps t_l t_r right post= 
+     let t1 = get_type_from_terms t_l.term_desc in 
+     let t2 = get_type_from_terms t_r.term_desc in 
+    let r = 
+                   try 
+                   is_subtype t1 t2 
+                   with Unification (_a,b) -> ( right := unify_var_name_in_state b t_l !right; post := unify_var_name_in_state b t_l !post; true)
+                   in 
+                   r
+let remove_from_residue_kappa (f:pi*kappa) (t:kappa) = 
+  let rec remove kappa =
+  match (kappa,t) with
+  | (PointsTo (a,b),PointsTo (c,_d)) -> if (a=c)  then  EmptyHeap else PointsTo (a,b)
+  | (SepConj (a,b),_) -> SepConj (remove a, remove b) 
+  | _ -> kappa
+  in
+  let new_kappa = remove (snd f) in 
+  (fst f, new_kappa)
 
 
-(* let entail_type (left:pi*kappa) (right:pi*kappa) (mapping: (string*string) list): (bool * (pi*kappa)) = 
+let entail_type (left_ori:pi*kappa) (right_ori:staged_spec) (mapping: (string*string) list): (bool * (pi*kappa)) = 
+  let (req, ens) = find_pre_post right_ori in
+  let post = ref ens in
+
+  let left = ref left_ori in
+  let right = ref req in
+  let remove_list_1 = ref [] in
+  let remove_list_2 = ref [] in
   let rec check_local maplist=
   match maplist with
-  | [] -> (true, [])
-  | (a,p) :: xs -> let t1 = get_type_from_terms (snd (find_in_state a left)).term_desc in 
-                   let t2 = get_type_from_terms (snd (find_in_state p right)).term_desc in 
-                   let r = is_subtype t1 t2 in 
-                   if r then
-                   let (r1,r2) = check_local xs in 
-                   (true && r1, p::r2) 
-                   else (false, []) 
+  | [] -> (true)
+
+  | (a,p) :: xs -> 
+                   let type_term_l =  (find_in_state a !left) in 
+                   let type_term_r =  (find_in_state p !right) in 
+                   (match (type_term_l,type_term_r) with 
+                   | (("s",t1),("s",t2)) -> let res = check_subtyps (snd t1) (snd t2) right post in 
+                   if res then res && check_local xs else false
+                   |(("h",t1),("h",t2)) -> let res = check_subtyps (snd t1) (snd t2) right post in 
+                   if res then (remove_list_1 := t1::!remove_list_1;remove_list_2 := t2::!remove_list_2; (res && check_local xs)) else false
+                   | _ -> failwith "to be implemented"
+                   ) 
+                  
                   in 
   let process_one =check_local mapping in 
-  if not (fst process_one) then failwith "ential fail"
-  else    *)
+  if not process_one then failwith "ential fail"
+  else       
+  let residue = List.fold_right (fun x acc-> remove_from_residue_kappa acc (PointsTo (fst x,snd x))) !remove_list_1 !left in 
+  left := residue; 
+  let remaining_frame = List.fold_right (fun x acc-> remove_from_residue_kappa acc (PointsTo (fst x,snd x))) !remove_list_2 !right in   
+  let rec check_remaining f = 
+    match f with 
+    |SepConj (a,b) -> check_remaining a && check_remaining b 
+    | EmptyHeap -> true 
+    | PointsTo (a,b) -> find     
+  
   
 
                          
