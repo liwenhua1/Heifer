@@ -14,6 +14,8 @@ open Syntax
 open Heap
 module StringMap = Map.Make(String)
 
+exception Entailfail of string
+
 (*
 open Normalize
 include Subst
@@ -575,7 +577,7 @@ let entail_type (left_ori:pi*kappa) (right_ori:staged_spec) mapping =
                   with Stateerror _ ->  (true && check_local xs) 
                   in 
   let process_one =check_local mapping in 
-  if not process_one then failwith "ential fail"
+  if not process_one then raise (Entailfail "entail fail in process one")
   else       
   let residue = List.fold_right (fun x acc-> remove_from_residue_kappa acc (PointsTo (fst x,snd x))) !remove_list_1 !left in 
   left := residue; 
@@ -665,7 +667,10 @@ let choose_case_for_match s var cases =
                          if fst result then (x.ccase_expr, snd result) else case_matching xs in 
   case_matching cases  
 
-
+(* let normal_pi p = 
+    let new_pi = match fst p with 
+    | Colon (_, x) -> (match x.term_desc with | Type (BaseTy (Tvar x)) -> )
+    | _  *)
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (staged_spec ) = 
    
   let _binders, (init_state,postcondition) = find_all_binders spec in
@@ -735,9 +740,17 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (
   in 
   let rs = forward (remove_req init_state) meth.m_body.core_desc in 
   print_endline (string_of_staged_spec (rs));
-
-  let _check_post = entail_type (make_post_state rs) (make_post postcondition)  (make_list_map (List.fold_right (fun x acc -> acc @ [fst x]) meth.m_params ["res"])) in
+  let post = (make_post_state rs) in 
+  let postcondition = (make_post postcondition) in
+  let map_args =   (make_list_map (List.fold_right (fun x acc -> acc @ [fst x]) meth.m_params ["res"])) in
+  (* try *)
+  let _check_post = entail_type post postcondition map_args in
   rs
+  (* with Entailfail _ -> (
+
+    let normalised_state = normal_pi post in 
+
+  ) *)
 
 
 (* let unify_ty (f:staged_spec) (var:string) (target:string) = 
