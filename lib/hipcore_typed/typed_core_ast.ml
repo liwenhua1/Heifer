@@ -256,3 +256,8 @@ let get_type_from_terms t =
   match t with 
   |Type x -> x 
   |_ -> failwith "not type term"
+
+let get_var_name_from_terms t = 
+  match t.term_desc with 
+  |Var x -> x 
+  |_ -> failwith "not type term"

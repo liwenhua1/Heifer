@@ -526,62 +526,7 @@ let call_primitive_type fname actualArgs (st:pi*kappa) =
     NormalReturn (res_eq (term (TApp ("string_of_int", [x1])) TyString), EmptyHeap)
   | _ ->
     failwith (Format.asprintf "unknown primitive: %s, args: %s" fname (string_of_list string_of_term actualArgs))  
-let analyze_type_spec (spec:staged_spec) (meth:meth_def) (_prog:core_program):  (staged_spec ) = 
-   
-    let _binders, init_state = find_all_binders spec in
-    (* list_printer print_endline (List.fold_right (fun a r -> (fst a)::r) binders []); *)
-  let rec forward state (body:core_lang_desc) : (staged_spec) = 
-    let () = print_endline (string_of_staged_spec (Require (fst state, snd state))) in
-    match body with
-  | CValue v ->constant_to_singleton_type_re v state
-  | CLet (x, expr1, expr2) -> 
-    let res = forward state expr1.core_desc in
-    let current_state = extract_return res in 
-    let old_var = fresh_variable () in
-    let change_x_to_old_x = swap_var_name_in_state (fst x) old_var current_state in
-    let new_state = swap_var_name_in_state "res" (fst x) change_x_to_old_x in 
-    forward new_state expr2.core_desc
 
-  | CFunCall (name, args) when List.mem name primitive_functions ->
-      call_primitive_type name args state
-  | CFunCall _ -> failwith "to be implemented CFunCall"
-  | CWrite (x, t) -> let r = find_in_state x  state in 
-                     if (fst r) = "h" then let r = swap_content_in_state x {term_desc = Type (BaseTy (Defty ("Ref",[map_ter_to_ty t])));term_type = t.term_type} state in 
-                     Require (fst r, snd r)
-               else 
-                (try
-                  (if (is_subtype (BaseTy (Defty ("Ref",[(map_ter_to_ty t)])))  (get_type_from_terms (snd (snd r)).term_desc)
-                ) then Require (fst state, snd state) else failwith "cannot change colon type"  )
-                with Unification (_,b) -> (
-                  print_endline b;
-                  print_endline (string_of_term t);
-                  let st = unify_var_name_in_state b t state in 
-                    Require (fst st, snd st)))
-  | CRef t ->
-      let x = Typed_core_ast.map_ter_to_ty t in
-       NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type (BaseTy (Defty ("Ref",[x]))); term_type = t.term_type})))
-  | CRead x -> 
-      let r = find_in_state x  state in
-      if (fst r) = "h" then 
-                let ch_var = (return_ref_value (snd (snd r))) in
-                (if fst ch_var then
-                NormalReturn (And (fst state, res_eq (snd ch_var)), snd state)
-                else NormalReturn (And (fst state,Colon ("res", (snd ch_var))), snd state)
-                ) 
-               else NormalReturn (And (fst state,Colon ("res", (snd (snd r)))), snd state) 
-  (* effect start *)
-  (* match e with | eff case... | constr case... *)
-  | CMatch _ -> failwith "to be implemented cmath"
-  | CLambda _ -> failwith "to be implemented CLambda"
-  | _ -> failwith "not supported expressions"
-  in 
-  let rs = forward (remove_req init_state) meth.m_body.core_desc in 
-  print_endline (string_of_staged_spec (rs)); rs
-
-
-(* let unify_ty (f:staged_spec) (var:string) (target:string) = 
-    let change_for_state (v:string) (t:string) (s:(pi*kappa)) = 
-      swap_var_name_in_state *)
 let check_subtyps t_l t_r right post= 
      let t1 = get_type_from_terms t_l.term_desc in 
      let t2 = get_type_from_terms t_r.term_desc in 
@@ -602,7 +547,7 @@ let remove_from_residue_kappa (f:pi*kappa) (t:kappa) =
   (fst f, new_kappa)
 
 
-let entail_type (left_ori:pi*kappa) (right_ori:staged_spec) (mapping: (string*string) list): (bool * (pi*kappa)) = 
+let entail_type (left_ori:pi*kappa) (right_ori:staged_spec) mapping = 
   let (req, ens) = find_pre_post right_ori in
   let post = ref ens in
 
@@ -631,12 +576,96 @@ let entail_type (left_ori:pi*kappa) (right_ori:staged_spec) (mapping: (string*st
   else       
   let residue = List.fold_right (fun x acc-> remove_from_residue_kappa acc (PointsTo (fst x,snd x))) !remove_list_1 !left in 
   left := residue; 
-  let remaining_frame = List.fold_right (fun x acc-> remove_from_residue_kappa acc (PointsTo (fst x,snd x))) !remove_list_2 !right in   
+  let remaining_frame = List.fold_right (fun x acc-> remove_from_residue_kappa acc (PointsTo (fst x,snd x))) !remove_list_2 !right in 
+  let remove_list_3 = ref [] in  
   let rec check_remaining f = 
     match f with 
     |SepConj (a,b) -> check_remaining a && check_remaining b 
     | EmptyHeap -> true 
-    | PointsTo (a,b) -> find     
+    | PointsTo (a,b) -> let r = find_in_state a !left in 
+                        if (fst r) = "s" then false else if (PointsTo (a,b) = PointsTo (fst (snd r), snd (snd r))) then (remove_list_3 := (snd r)::!remove_list_3;true) else false 
+    in 
+  let entail_result = check_remaining (snd remaining_frame) in 
+  let final_residue = List.fold_right (fun x acc-> remove_from_residue_kappa acc (PointsTo (fst x,snd x))) !remove_list_3 !left in 
+  if entail_result then (final_residue, !post) else failwith "entail fail in remaining"
+
+let rec arg_mapping l1 l2 = match (l1,l2) with 
+            |(x::xs,y::ys) -> (x,y)::(arg_mapping xs ys)
+            |([],[]) -> []
+            |_ -> failwith "parameter lists length not match"
+
+let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (staged_spec ) = 
+   
+    let _binders, init_state = find_all_binders spec in
+    (* list_printer print_endline (List.fold_right (fun a r -> (fst a)::r) binders []); *)
+  let rec forward state (body:core_lang_desc) : (staged_spec) = 
+    let () = print_endline (string_of_staged_spec (Require (fst state, snd state))) in
+    match body with
+  | CValue v ->constant_to_singleton_type_re v state
+  | CLet (x, expr1, expr2) -> 
+    let res = forward state expr1.core_desc in
+    let current_state = extract_return res in 
+    let old_var = fresh_variable () in
+    let change_x_to_old_x = swap_var_name_in_state (fst x) old_var current_state in
+    let new_state = swap_var_name_in_state "res" (fst x) change_x_to_old_x in 
+    forward new_state expr2.core_desc
+
+  | CFunCall (name, args) when List.mem name primitive_functions ->
+      call_primitive_type name args state
+  | CFunCall (name, args) ->
+
+     let spec_table = prog.cp_predicates in 
+     let spec_details = SMap.find name spec_table in 
+     let spec = spec_details.p_body in 
+     let parameters =  spec_details.p_params in
+     let args = List.fold_right (fun x acc -> acc @ [get_var_name_from_terms x]) args [] in
+     let parameters = List.fold_right (fun x acc -> acc @ [fst x]) parameters [] in
+     let mappings = arg_mapping args parameters in 
+     let (residue,result) = entail_type state  spec mappings in
+     NormalReturn (And (fst residue,fst result), SepConj (snd residue,snd result))
+                 
+
+  | CWrite (x, t) -> let r = find_in_state x  state in 
+                     if (fst r) = "h" then let r = swap_content_in_state x {term_desc = Type (BaseTy (Defty ("Ref",[map_ter_to_ty t])));term_type = t.term_type} state in 
+                     Require (fst r, snd r)
+               else 
+                (try
+                  (if (is_subtype (BaseTy (Defty ("Ref",[(map_ter_to_ty t)])))  (get_type_from_terms (snd (snd r)).term_desc)
+                ) then Require (fst state, snd state) else failwith "cannot change colon type"  )
+                with Unification (_,_) -> (
+                  
+                  failwith "cannot write to type vars"
+                  (* let st = unify_var_name_in_state b t state in 
+                    Require (fst st, snd st) *)
+                    
+                    ))
+  | CRef t ->
+      let x = Typed_core_ast.map_ter_to_ty t in
+       NormalReturn (fst state, SepConj (snd state, PointsTo ("res", {term_desc = Type (BaseTy (Defty ("Ref",[x]))); term_type = t.term_type})))
+  | CRead x -> 
+      let r = find_in_state x  state in
+      if (fst r) = "h" then 
+                let ch_var = (return_ref_value (snd (snd r))) in
+                (if fst ch_var then
+                NormalReturn (And (fst state, res_eq (snd ch_var)), snd state)
+                else NormalReturn (And (fst state,Colon ("res", (snd ch_var))), snd state)
+                ) 
+               else NormalReturn (And (fst state,Colon ("res", (snd (snd r)))), snd state) 
+  (* effect start *)
+  (* match e with | eff case... | constr case... *)
+  | CMatch _ -> failwith "to be implemented cmath"
+  | CLambda _ -> failwith "to be implemented CLambda"
+  | _ -> failwith "not supported expressions"
+  in 
+  let rs = forward (remove_req init_state) meth.m_body.core_desc in 
+  print_endline (string_of_staged_spec (rs)); rs
+
+
+(* let unify_ty (f:staged_spec) (var:string) (target:string) = 
+    let change_for_state (v:string) (t:string) (s:(pi*kappa)) = 
+      swap_var_name_in_state *)
+
+
   
   
 
