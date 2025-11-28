@@ -618,8 +618,32 @@ let extract_case_var (cv:core_lang) =
   | CValue a -> (match a.term_desc with |Var x -> x |_ -> failwith "unsupported match constr")
   | _ -> failwith "unsupported match constr"
 
-let match_constructors (ty_list:ty list) (p_list:pattern list) s = 
-    
+let rec match_constructors (ty_list:ty list) (p_list) s = 
+   
+    match (ty_list,p_list) with
+    | ([],[]) -> (true,s) 
+    | ((BaseTy (Tvar x))::xs, (PVar y)::ys) -> let term = find_in_state x s in 
+                                                let new_s =
+                                                if (fst term) = "s" then 
+                                               
+                                                ((And (Colon (fst y,(snd (snd term))), fst s), snd s)) 
+                                                else (And (Atomic (EQ,{term_desc=Var (fst y);term_type=(snd (snd term)).term_type},{term_desc=Var (fst (snd term));term_type=(snd (snd term)).term_type}), fst s), snd s) in
+                                                let (r1,r2) = match_constructors xs ys new_s in
+                                                (true&&r1, r2)
+    | ((BaseTy (Consta a))::xs, (PConstant b)::ys) -> 
+                                                    if (a=b) then 
+                                                      let (r1,r2) = match_constructors xs ys s in
+                                                      (true&&r1, r2) else (false,s) 
+    | ((x::xs),(PVar y)::ys) -> let s = (And ((Colon (fst y,{term_desc=Type x;term_type =snd y}),fst s)), snd s) in
+                                let (r1,r2) = match_constructors xs ys s in
+                                (true&&r1, r2)
+    | (_x::_xs,[]) -> failwith "uneven parameter"
+    | ([],_y::_ys) 
+      -> failwith "uneven parameter"
+    | _ -> failwith "to be implemented"
+
+                                         
+
   
 let match_type_with_pattern term s pattern = 
   let ty =  (snd (snd term)) in
@@ -627,18 +651,19 @@ let match_type_with_pattern term s pattern =
   |(_, PVar x) -> if (fst term) = "s" then (true,(And (Colon (fst x,ty), fst s), snd s)) 
                   else (true,(And (Atomic (EQ,{term_desc=Var (fst x);term_type=pattern.pattern_type},{term_desc=Var (fst (snd term));term_type=pattern.pattern_type}), fst s), snd s))
   |(Type (BaseTy (Defty (a,b))),PConstr (c,d)) -> 
-    if (a=c) then (true,s)
-    else (false,s)
-
+    if (a=c) then  
+      let p_list = List.fold_right (fun x acc ->acc@[x.pattern_desc]) d [] in
+      let r = match_constructors b p_list s in 
+      if (fst r) then (true, (snd r)) else (false,s)
+      else (false,s)
+  |_ -> failwith "to be implemented"
 let choose_case_for_match s var cases = 
   let ty = (find_in_state var s) in
-  let rec case_matching  = match cases with 
+  let rec case_matching  cases_list = match cases_list with 
             | [] -> failwith "to be implemnted for underscore"
-            | x :: xs -> let pattern = x.ccase_pat in 
-                          (
-                            match pattern with 
-
-                          )
+            | x :: xs -> let result = match_type_with_pattern ty s x.ccase_pat in 
+                         if fst result then (x.ccase_expr, snd result) else case_matching xs in 
+  case_matching cases  
 
 
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (staged_spec ) = 
@@ -703,14 +728,13 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (
   | CMatch (_, _, discriminant, _, cases) -> 
     (*currently assume match always working on var*)
     let case_var = extract_case_var discriminant in 
-
-    
-    failwith "to be implemented cmath"
+    let (r1,r2) = choose_case_for_match state case_var cases in
+    forward r2 r1.core_desc
   | CLambda _ -> failwith "to be implemented CLambda"
   | _ -> failwith "not supported expressions"
   in 
   let rs = forward (remove_req init_state) meth.m_body.core_desc in 
-  (* print_endline (string_of_staged_spec (rs)); *)
+  print_endline (string_of_staged_spec (rs));
 
   let _check_post = entail_type (make_post_state rs) (make_post postcondition)  (make_list_map (List.fold_right (fun x acc -> acc @ [fst x]) meth.m_params ["res"])) in
   rs
