@@ -613,6 +613,33 @@ let rec make_list_map list =
   | [] -> []
   | x::xs -> (x,x) :: make_list_map xs
 
+let extract_case_var (cv:core_lang) = 
+  match cv.core_desc with 
+  | CValue a -> (match a.term_desc with |Var x -> x |_ -> failwith "unsupported match constr")
+  | _ -> failwith "unsupported match constr"
+
+let match_constructors (ty_list:ty list) (p_list:pattern list) s = 
+    
+  
+let match_type_with_pattern term s pattern = 
+  let ty =  (snd (snd term)) in
+  match (ty.term_desc,pattern.pattern_desc) with
+  |(_, PVar x) -> if (fst term) = "s" then (true,(And (Colon (fst x,ty), fst s), snd s)) 
+                  else (true,(And (Atomic (EQ,{term_desc=Var (fst x);term_type=pattern.pattern_type},{term_desc=Var (fst (snd term));term_type=pattern.pattern_type}), fst s), snd s))
+  |(Type (BaseTy (Defty (a,b))),PConstr (c,d)) -> 
+    if (a=c) then (true,s)
+    else (false,s)
+
+let choose_case_for_match s var cases = 
+  let ty = (find_in_state var s) in
+  let rec case_matching  = match cases with 
+            | [] -> failwith "to be implemnted for underscore"
+            | x :: xs -> let pattern = x.ccase_pat in 
+                          (
+                            match pattern with 
+
+                          )
+
 
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (staged_spec ) = 
    
@@ -673,7 +700,12 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (
                else NormalReturn (And (fst state,Colon ("res", (snd (snd r)))), snd state) 
   (* effect start *)
   (* match e with | eff case... | constr case... *)
-  | CMatch _ -> failwith "to be implemented cmath"
+  | CMatch (_, _, discriminant, _, cases) -> 
+    (*currently assume match always working on var*)
+    let case_var = extract_case_var discriminant in 
+
+    
+    failwith "to be implemented cmath"
   | CLambda _ -> failwith "to be implemented CLambda"
   | _ -> failwith "not supported expressions"
   in 
