@@ -456,8 +456,8 @@ let extract_return (s:staged_spec) = match s with
                   
 let rec find_all_binders (s:staged_spec) = 
   match s with 
-  | ForAll (b,s2) -> (b :: fst (find_all_binders s2), snd  (find_all_binders s2))
-  | Sequence (pre,_) -> ([], pre) 
+  | ForAll (b,s2) -> (b :: fst (find_all_binders s2), snd (find_all_binders s2))
+  | Sequence (pre,post) -> ([], (pre,post)) 
   | _ -> failwith "type verification must have single req and ens" 
 
 let rec find_pre_post (s:staged_spec) = 
@@ -561,7 +561,10 @@ let entail_type (left_ori:pi*kappa) (right_ori:staged_spec) mapping =
 
   | (a,p) :: xs -> 
                    let type_term_l =  (find_in_state a !left) in 
+                   try 
                    let type_term_r =  (find_in_state p !right) in 
+                   
+
                    (match (type_term_l,type_term_r) with 
                    | (("s",t1),("s",t2)) -> let res = check_subtyps (snd t1) (snd t2) right post in 
                    if res then res && check_local xs else false
@@ -569,7 +572,7 @@ let entail_type (left_ori:pi*kappa) (right_ori:staged_spec) mapping =
                    if res then (remove_list_1 := t1::!remove_list_1;remove_list_2 := t2::!remove_list_2; (res && check_local xs)) else false
                    | _ -> failwith "to be implemented"
                    ) 
-                  
+                  with Stateerror _ ->  (true && check_local xs) 
                   in 
   let process_one =check_local mapping in 
   if not process_one then failwith "ential fail"
@@ -594,12 +597,29 @@ let rec arg_mapping l1 l2 = match (l1,l2) with
             |([],[]) -> []
             |_ -> failwith "parameter lists length not match"
 
+let make_post post = 
+  match post with 
+  | NormalReturn (a,b) -> Sequence (Require (a,b), NormalReturn (a,b))
+  | _ -> failwith "invalid post"
+
+let make_post_state post= 
+  match post with 
+  | NormalReturn (a,b) -> (a,b)
+  | Require (a,b) -> (a,b)
+  | _ -> failwith "invalid post state"
+
+let rec make_list_map list = 
+  match  list with
+  | [] -> []
+  | x::xs -> (x,x) :: make_list_map xs
+
+
 let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (staged_spec ) = 
    
-    let _binders, init_state = find_all_binders spec in
+  let _binders, (init_state,postcondition) = find_all_binders spec in
     (* list_printer print_endline (List.fold_right (fun a r -> (fst a)::r) binders []); *)
   let rec forward state (body:core_lang_desc) : (staged_spec) = 
-    let () = print_endline (string_of_staged_spec (Require (fst state, snd state))) in
+    (* let () = print_endline (string_of_staged_spec (Require (fst state, snd state))) in *)
     match body with
   | CValue v ->constant_to_singleton_type_re v state
   | CLet (x, expr1, expr2) -> 
@@ -658,7 +678,10 @@ let analyze_type_spec (spec:staged_spec) (meth:meth_def) (prog:core_program):  (
   | _ -> failwith "not supported expressions"
   in 
   let rs = forward (remove_req init_state) meth.m_body.core_desc in 
-  print_endline (string_of_staged_spec (rs)); rs
+  (* print_endline (string_of_staged_spec (rs)); *)
+
+  let _check_post = entail_type (make_post_state rs) (make_post postcondition)  (make_list_map (List.fold_right (fun x acc -> acc @ [fst x]) meth.m_params ["res"])) in
+  rs
 
 
 (* let unify_ty (f:staged_spec) (var:string) (target:string) = 

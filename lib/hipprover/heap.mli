@@ -1,6 +1,6 @@
 open Hipcore_typed
 open Typedhip
-
+exception Stateerror of string
 val split_one : kappa -> ((string * term) * kappa) option
 
 val split_find : string -> kappa -> (term * kappa) option

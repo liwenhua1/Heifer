@@ -6,7 +6,7 @@ open Typedhip
   fun (p, h) ->
   let h = simplify_heap h in
   (simplify_pure p, h) *)
-
+exception Stateerror of string
 (** given a nonempty heap formula, splits it into a points-to expression and another heap formula *)
 let rec split_one (h : kappa) : ((string * term) * kappa) option =
   match h with
@@ -134,7 +134,7 @@ let find_in_state (v:string) (s:(pi*kappa)) =
     let r2 = find_var_in_pure v (fst s) in 
     match r2 with 
     | x :: _ -> ("s",x) 
-    | _ -> failwith "spec error" 
+    | _ -> raise (Stateerror "spec error") 
   )
 
 let swap_var_name_in_state (ori:string) (replace:string) (s:pi*kappa) = 
